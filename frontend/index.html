@@ -14,6 +14,7 @@
   <title>Online Chat v1</title>
 </head>
 <body>
+
   <header>
     <div class="header-content">
       <span class="mode-index"></span>
@@ -69,6 +70,34 @@
     </template>
   </main>
   <script type="module" src="./js/index.js"></script>
+=======
+
+<header>
+  <h1>Online Chat</h1>
+</header>
+
+<!--
+  2. Отрисовка этого сообщения
+  1. Отправка сообщения на сервер
+    - Валидация сообщения
+  3. Периодическая отрисовка всех сообщений
+-->
+
+<main>
+  <section class="messages"></section>
+
+  <section class="form">
+    <form method="POST" action="/">
+      <input type="hidden" name="username" value="guest001" />
+      <textarea name="text"></textarea>
+      <button>Отправить</button>
+    </form>
+  </section>
+</main>
+
+<script src="./js/index.js"></script>
+
+
 </body>
 
 </html>
