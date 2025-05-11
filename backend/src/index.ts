@@ -25,9 +25,9 @@ const idIterator = infiniteSequence();
 server.use(cors());
 server.use(express.json());
 
-server.get("/", function (req: Request, res: Response) {
-    res.status(200).json("Hello from backend");
-});
+// server.get("/", function (req: Request, res: Response) {
+//     res.status(200).json("Hello from backend");
+// });
 
 server.get("/messages", function (req: Request, res: Response) {
     res.status(200).json([...messages]);
