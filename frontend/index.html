@@ -1,18 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="./img/Logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="./css/main.css">
   <title>Online Chat v1</title>
 </head>
+
 <body>
-
-<main class="messages">
-
-</main>
-
-<script src="./js/index.js"></script>
-
+  <header>
+    <div class="header-content">
+      <span class="mode-index"></span>
+      <div class="header-chat-lable">
+        <img src="./img/Logo.svg" alt="logo">
+        <span>Online Chat</span>
+      </div>
+      <div class="header-chat-manager">
+        <button id="toggle-button" class="toggle-btn"></button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <template id="template1">
+      <div id="element1" class="main-greeting-background">
+        <div class="logo-container">
+          <img src="./img/Logo.svg" alt="logo">
+        </div>
+        <h1>Online Chat</h1>
+        <div class="auth-form-container">
+          <form action="">
+            <div class="auth-form-content">
+              <label for="username" class="auth-label">Username</label>
+              <input type="text" id="username" placeholder="Value" class="auth-input">
+              <button type="submit" class="auth-btn">Join</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </template>
+    <template id="template2">
+      <section id="element2" class="main-chat-background">
+        <div class="chat-options-container">
+          <div class="chat-options-content hidden">
+            <button type="button" id="toggle-button" class="toggle-btn" disabled>Edit name</button>
+            <button type="button" id="logout-button" class="logout-btn" disabled>Logout</button>
+          </div>
+        </div>
+        <!--
+          2. Отрисовка этого сообщения
+          1. Отправка сообщения на сервер
+            - Валидация сообщения
+          3. Периодическая отрисовка всех сообщений
+        -->
+        <section class="messages"></section>
+        <form action="/" method="POST" class="message-input">
+          <input type="hidden" name="username" value="guest001"/>
+          <textarea name="text" placeholder="Write a message..." class="input-content"></textarea>
+          <button class="submit-message"></button>
+        </form>
+        <div class="form-submit-info"></div>
+      </section>
+    </template>
+  </main>
+  <script type="module" src="./js/index.js"></script>
 </body>
+
 </html>
