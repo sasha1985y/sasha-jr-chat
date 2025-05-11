@@ -350,6 +350,43 @@ project/
 ├── docker-compose.yml    # Docker Compose для управления проектом
 ```
 
+```
+project/
+├── backend/                                  # Серверная часть
+│   ├── dist/                                 # Директория серверной сборки проекта
+│   │   ├── index.js                          # Основной файл сервера после компиляции
+│   ├── node_modules/                         # Исходный код TypeScript
+│   │   ├── packages...                       # Зависимости проекта
+│   ├── src/                                  # Исходный код TypeScript
+│   │   ├── index.ts                          # Основной файл сервера
+│   ├── .gitignore                            # .gitignore бэкенда
+│   ├── package.json                          # Зависимости для Node.js
+│   ├── tsconfig.json                         # Конфигурация TypeScript
+│   ├── Dockerfile                            # Dockerfile для Backend (ещё не создан)
+├── frontend/                                 # Клиентская часть
+│   ├── css/                                  # Директория стилей
+|   │   ├── main.css                          # Основной файл css
+│   ├── img/                                  # Директория картинок
+|   │   ├── img.svg...                        # картинки
+│   ├── js/                                   # Директория логики работы на клиенте
+|   │   ├── components/                       # Директория функциональных компонентов
+|   |   │   ├── chat-options-btn-layout.js    # Файл функционального компонента
+|   |   │   ├── header-chat-lable-layout.js   # Файл функционального компонента
+|   |   │   ├── message-element-layout.js     # Файл функционального компонента
+|   |   │   ├── message-popup-layout.js       # Файл функционального компонента
+|   |   │   ├── toggle-button-layout.js       # Файл функционального компонента
+|   │   ├── utils/                            # Директория функций общего назначения
+|   |   │   ├── utils.js                      # Файл функций общего назначения
+|   │   ├── index.js                          # Логика работы на клиенте
+|   │   ├── main.js                           # Основной файл реэкспорта
+│   ├── index.html                            # Основной файл HTML
+│   ├── nginx.conf                            # Конфигурация Nginx (ещё не создан)
+│   ├── Dockerfile                            # Dockerfile для Frontend (ещё не создан)
+├── docker-compose.yml                        # Docker Compose для управления проектом (ещё не создан)
+├── .gitignore                                # .gitignore приложения
+├── README.md                                 # README приложения
+```
+
 **Основные файлы и их назначение:**
 
 1. Backend:
