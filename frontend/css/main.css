@@ -65,13 +65,13 @@ body {
     margin-right: 1.5%;
 }
 
-.chat-options-btn::before,
-.toggle-btn::before {
+.chat-options-btn::before {
     content: url("../img/dots.svg");
 }
 
 .chat-options-btn,
 .toggle-btn {
+    color: var(--blue-color-background);
     background-color: var(--no-color-background);
     border: solid 0 var(--no-color-background);
 }
@@ -141,7 +141,13 @@ h1 {
     margin-top: 10%;
 }
 
-.auth-form-container {
+.username-form-container {
+    width: 20vw;
+    height: 23vh;
+}
+
+.username {
+    position: inherit;
     border-radius: 5px;
     width: 20vw;
     background-color: var(--white-color-background);
