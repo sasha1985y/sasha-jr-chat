@@ -22,7 +22,7 @@
         <span>Online Chat</span>
       </div>
       <div class="header-chat-manager">
-        <button id="toggle-button" class="toggle-btn"></button>
+        <button id="toggle-button" class="toggle-btn">GO Chat!</button>
       </div>
     </div>
   </header>
@@ -33,14 +33,16 @@
           <img src="./img/Logo.svg" alt="logo">
         </div>
         <h1>Online Chat</h1>
-        <div class="auth-form-container">
-          <form action="">
-            <div class="auth-form-content">
-              <label for="username" class="auth-label">Username</label>
-              <input type="text" id="username" placeholder="Value" class="auth-input">
+        <div class="username-form-container">
+          <dialog class="username" open="true">
+            <form method="POST">
+              <fieldset class="auth-form-content">
+                <label for="username" class="auth-label">Username</label>
+                <input id="username" required type="text" name="username" placeholder="username" autocapitalize="off" autocomplete="off" class="auth-input">
+              </fieldset>
               <button type="submit" class="auth-btn">Join</button>
-            </div>
-          </form>
+            </form>
+          </dialog>
         </div>
       </div>
     </template>
