@@ -18,6 +18,9 @@ let currentElement = null;
 let mode = "";
 headerChatLable.innerHTML = "";
 
+const USERNAME_REC = "username";
+let username = null;
+
 function renderMessages(messages, container) {
     let index = 0;
     for (const message of messages) {
@@ -29,13 +32,14 @@ function renderMessages(messages, container) {
         }
 
         messageElement.innerHTML = createMessageElement(message);
-
-        container.appendChild(messageElement);
+        if (container) {
+            container.appendChild(messageElement);
+        }
         index++;
     }
 }
 
-function getMessages(container) {
+function getMessages(container, cb) {
     const formSubmitInfo = document.querySelector(".form-submit-info");
     fetch("http://localhost:4000/messages", {
         method: "GET",
@@ -55,6 +59,15 @@ function getMessages(container) {
             console.error(error);
             formSubmitInfo.textContent = error;
         });
+
+        if (typeof cb === "function") {
+          cb();
+        }
+}
+
+function scrollToBottom() {
+    const chatContainer = document.querySelector(".messages");
+    chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
 function initForm(container) {
@@ -97,7 +110,7 @@ function initForm(container) {
                 formSubmitInfo.textContent = "";
 
                 container.innerHTML = "";
-                getMessages(container);
+                getMessages(container, scrollToBottom);
             })
             .catch(function (error) {
                 formSubmitInfo.textContent = error;
@@ -107,9 +120,10 @@ function initForm(container) {
     }
 }
 
-function initChat(container) {
-    getMessages(container);
-    initForm(container);
+function initChat(chatContainer) {
+    getMessages(chatContainer, scrollToBottom);
+    setInterval(getMessages, 3000);
+    initForm(chatContainer);
 }
 
 
@@ -129,6 +143,8 @@ window.onload = () => {
     showElement(template1, main);
     mode = "greeting";
     modeIndex.textContent = mode;
+
+    const usernameContainer = document.querySelector(".username");
 };
 
 function toggleBtnLogic() {
@@ -136,14 +152,14 @@ function toggleBtnLogic() {
 
         showElement(template2, main);
 
-        const container = document.querySelector(".messages");
+        const chatContainer = document.querySelector(".messages");
 
         mode = "chat";
 
-        if (container) {
-            initChat(container);
+        if (chatContainer) {
+            initChat(chatContainer);
             
-            container.addEventListener("click", function(event) {
+            chatContainer.addEventListener("click", function(event) {
 
                 if (event.target.classList.contains("message-control")) {
 
@@ -154,7 +170,7 @@ function toggleBtnLogic() {
 
                         const messagePopup = createMessagePopup();
 
-                        container.querySelectorAll(".contains-popup").forEach(place => {
+                        chatContainer.querySelectorAll(".contains-popup").forEach(place => {
                             place.innerHTML = "";
                             popupContainer.innerHTML = messagePopup;
                         })
