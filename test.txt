@@ -1,9 +1,15 @@
-Bald spot!
-Actually named Bob. You've probably heard about this character. Now you can experience his adventure! This mod brings a faithful remake of PZ's old tech demo for everyone to enjoy!
+In Buenos Aires, a deadly snowfall has covered the streets — if you're not properly covered... you'll die instantly.
 
-How does it work?
-This mod adds a new "Challenge" that is actually a remake of the tech demo the developers released many years ago for the public. Play as Bob Smith, and survive the Apocalypse with your wife Kate!
+IDEA: Tizi
+CODE: bubby_pz33
+Big thanks to this guy for helping with the coding — absolute legend.
 
-Under Development
-This mod is NOT ready yet. I decided to release it earlier to see if enough people would be interested in it for me to finish the project. This is an extremely complex mod, and I just don't have the time or resources to finish it right now.
-For now, the mod will finish about 90% onto the demo. More content may be added soon.
+A new option has been added to start with an outdoor outfit. You can choose the one you prefer by creating an open-world game and checking the sandbox options.
+
+This mod includes deadly snow, not eternal snow, so for a full experience I suggest combining it with the Cryogenic Winter mod and enabling the eternal snow option.
+
+If you take off even a single piece of clothing while it's snowing, you will die immediately — worn-out clothing counts too, so watch out for zombies...
+
+If you're inside a building, you're safe. You may even find refuge in vehicles, as long as all windows and doors are closed. But remember to put your clothes back on before going outside!
+
+With this mod, a new project starts, an PZ server inspired by the eternaut, needs funding
