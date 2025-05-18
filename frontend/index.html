@@ -34,7 +34,7 @@
         </div>
         <h1>Online Chat</h1>
         <div class="username-form-container">
-          <dialog class="username" open="true">
+          <dialog class="username">
             <form method="POST">
               <fieldset class="auth-form-content">
                 <label for="username" class="auth-label">Username</label>
@@ -62,7 +62,7 @@
         -->
         <section class="messages"></section>
         <form action="/" method="POST" class="message-input">
-          <input type="hidden" name="username" value="guest001"/>
+          <input type="hidden" name="username"/>
           <textarea name="text" placeholder="Write a message..." class="input-content"></textarea>
           <button class="submit-message"></button>
         </form>
