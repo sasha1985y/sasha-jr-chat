@@ -17,7 +17,32 @@ function removeEscPopupListener(area, container, callback) {
     }
 }
 
+/**
+    @example function showElement(template, container) {
+
+                if (currentElement) {
+                    currentElement.remove();
+                }
+
+                currentElement = template.content.cloneNode(true).firstElementChild;
+                container.innerHTML = "";
+                container.appendChild(currentElement);
+    }
+*/
+
+function showElement(template, container) {
+
+    if (currentElement) {
+        currentElement.remove();
+    }
+
+    currentElement = template.content.cloneNode(true).firstElementChild;
+    container.innerHTML = "";
+    container.appendChild(currentElement);
+}
+
 export {
     hideEscPopup,
     removeEscPopupListener,
+    showElement,
 }
