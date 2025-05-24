@@ -19,6 +19,7 @@
   "dependencies": {
     "@types/cors": "^2.8.17",
     "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
     "express": "^5.1.0"
   }
 }
