@@ -14,10 +14,23 @@
     --radial-gradient-greeting_0: radial-gradient(20% 30% at 60% 40%, #006FFF, transparent);
     --app-font-size: 16px;
     --app-font-family: "Inter", sans-serif;
+    --prsel-background: "✉️";
 }
 
 .hidden {
     opacity: 0;
+}
+
+.show {
+    opacity: 1;
+}
+
+.underlay {
+    z-index: 0;
+}
+
+.overlay {
+    z-index: 1;
 }
 
 ::-webkit-scrollbar {
@@ -141,22 +154,25 @@ h1 {
     margin-top: 10%;
 }
 
-.username-form-container {
-    width: 20vw;
-    height: 23vh;
-}
-
 .username {
-    position: inherit;
+    position: absolute;
+    top: 48%;
+    left: 40%;
     border-radius: 5px;
     width: 20vw;
     background-color: var(--white-color-background);
+    border: solid 0 var(--no-color-background);
+}
+
+.username form {
+    align-items: center;
+    padding: 10% 10% 7% 10%;
 }
 
 .auth-form-content {
     display: flex;
     flex-direction: column;
-    padding: 7%;
+    border: solid 0 var(--no-color-background);
 }
 
 .auth-label {
@@ -173,6 +189,7 @@ h1 {
 }
 
 .auth-btn {
+    width: 100%;
     border: solid 0 var(--lightgray-color-background);
     border-radius: 2px;
     background-color: var(--black-color-background);
@@ -202,12 +219,45 @@ h1 {
 
 .messages {
     width: 70vw;
-    height: 60vh;
+    height: 70vh;
     overflow: auto;
+}
+
+.toggle-menu-chat-container {
+    display: flex;
+    justify-content: end;
+    width: 90vw;
+    height: auto;
+}
+
+.toggle-menu-chat-btn {
+    width: 6vw;
+    height: 6vh;
+    background-color: var(--white-color-background);
+    border: solid 1px var(--lightgray-color-background);
+    border-radius: 5px;
+}
+
+.toggle-menu-chat-btn::before {
+    content: var(--prsel-background);
+    font-size: 1.5rem;
+}
+
+.toggle-menu-chat-btn:hover {
+    font-size: 1.7rem;
+    background-color: var(--lightgray-color-background);
+}
+
+.toggle-menu-chat-btn:active {
+    background-color: var(--gray-color-background);
 }
 
 .odd-numbered {
     margin-left: auto;
+}
+
+.system-message {
+    margin-left: 40%;
 }
 
 .message-panel {
@@ -240,13 +290,23 @@ h1 {
     width: 50%;
 }
 
-.message-text {
+.message p:has(span),
+.message p:has(em),
+.message p:has(img),
+p.has-text {
     padding: 3%;
     border: solid 1px var(--gray-color-background);
     border-radius: 10px;
 }
 
-.message-text:hover {
+.message-system-text {
+    border: solid 0 var(--no-color-background);
+}
+
+.message p:has(span):hover,
+.message p:has(em):hover,
+.message p:has(img):hover,
+p.has-text:hover {
     border: solid 1px var(--blue-color-background);
 }
 
@@ -255,7 +315,7 @@ h1 {
     display: flex;
     justify-content: center;
     width: 70vw;
-    margin-top: 82vh;
+    margin-top: 40vh;
 }
 
 /*форма ввода*/
