@@ -6,17 +6,15 @@
           <img src="./img/Logo.svg" alt="logo">
         </div>
         <h1>Online Chat</h1>
-        <div class="username-form-container">
-          <dialog class="username" open="true">
-            <form method="POST">
-              <fieldset class="auth-form-content">
-                <label for="username" class="auth-label">Username</label>
-                <input id="username" required type="text" name="username" placeholder="username" autocapitalize="off" autocomplete="off" class="auth-input">
-              </fieldset>
-              <button type="submit" class="auth-btn">Join</button>
-            </form>
-          </dialog>
-        </div>
+        <dialog class="username" open="true">
+          <form method="POST">
+            <fieldset class="auth-form-content">
+              <label for="username" class="auth-label">Username</label>
+              <input id="username" required type="text" name="username" placeholder="username" autocapitalize="off" autocomplete="off" class="auth-input">
+            </fieldset>
+            <button type="submit" class="auth-btn">Join</button>
+          </form>
+        </dialog>
       </div>
     </template>
 */
@@ -33,13 +31,16 @@ const template1 = document.getElementById("template1");
               <button type="button" id="logout-button" class="logout-btn" disabled>Logout</button>
             </div>
           </div>
-          <section class="messages"></section>
-          <form action="/" method="POST" class="message-input">
+          <section class="messages overlay"></section>
+          <form action="/" method="POST" class="message-input underlay hidden">
             <input type="hidden" name="username"/>
-            <textarea name="text" placeholder="Write a message..." class="input-content"></textarea>
+            <textarea id="example" name="text" placeholder="Write a message..." class="input-content"></textarea>
             <button class="submit-message"></button>
           </form>
           <div class="form-submit-info"></div>
+          <div class="toggle-menu-chat-container">
+            <button type="button" class="toggle-menu-chat-btn"></button>
+          </div>
         </section>
       </template>
 */
