@@ -8,8 +8,6 @@ import {
     template2,
 } from "./main.js";
 
-//const template1 = document.getElementById("template1");
-//const template2 = document.getElementById("template2");
 const toggleButton = document.getElementById("toggle-button");
 const main = document.querySelector("main");
 const headerChatLable = document.querySelector(".header-chat-lable");
@@ -22,6 +20,7 @@ headerChatLable.innerHTML = "";
 
 const USERNAME_REC = "username";
 const FAKE_USER = "Anonimous user";
+const SYSTEM_USER = "System";
 let username = null;
 
 function showElement(template, container) {
@@ -39,22 +38,35 @@ function renderMessages(messages, container) {
     let index = 0;
     for (const message of messages) {
         const messageElement = document.createElement("article");
-        messageElement.className = "message";
+        messageElement.className = "message fr-view";
 
+        
         if (index % 2 !== 0) {
             messageElement.classList.add("odd-numbered");
         }
 
-        if (username === FAKE_USER) {
-            message.username = FAKE_USER;
+        messageElement.innerHTML = createMessageElement(message);
+        if (message.username === SYSTEM_USER) {
+            messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+            messageElement.querySelector(".message-text")
+                .classList.remove("message-text");
+            messageElement.classList.add("message-system-text");
+            messageElement.classList.remove("odd-numbered");
+            messageElement.classList.add("system-message");
         }
 
-        messageElement.innerHTML = createMessageElement(message);
+        
         if (container) {
             container.appendChild(messageElement);
         }
         index++;
     }
+    
+    document.querySelectorAll('p').forEach(function (p) {
+        if (p.textContent.trim() !== '') { // Проверяем, не пустой ли текст
+            p.classList.add('has-text'); // Добавляем класс если текст не пустой
+        }
+    });
 }
 
 function getMessages(container, cb) {
@@ -128,6 +140,16 @@ function initForm(container) {
                 formTextField.value = "";
                 formSubmitButton.disabled = false;
                 formSubmitInfo.textContent = "";
+
+                const formContainer = document.querySelector("form");
+
+                toggleProperty(formContainer, "overlay");
+                toggleProperty(formContainer, "underlay");
+                toggleProperty(formContainer, "show");
+                toggleProperty(formContainer, "hidden");
+
+                toggleProperty(container, "overlay");
+                toggleProperty(container, "underlay");
 
                 container.innerHTML = "";
                 getMessages(container, scrollToBottom);
@@ -203,10 +225,15 @@ function goGreetingMenu() {
     toggleButton.addEventListener("click", toggleBtnLogic);
 }
 
+function toggleProperty(element, classprop) {
+    element.classList.toggle(classprop);
+}
+
 function toggleBtnLogic() {
     if (currentElement && currentElement.id === "element1") {
 
         showElement(template2, main);
+        var editor = new FroalaEditor('#example');
 
         const chatContainer = document.querySelector(".messages");
 
@@ -214,6 +241,24 @@ function toggleBtnLogic() {
 
         if (chatContainer) {
             initChat(chatContainer);
+
+            const toggleMenuChatBtn = document.querySelector(".toggle-menu-chat-btn");
+            const formContainer = document.querySelector("form");
+
+            if (toggleMenuChatBtn) {
+                
+                toggleMenuChatBtn.addEventListener("click", () => {
+                    toggleProperty(formContainer, "overlay");
+                    toggleProperty(formContainer, "underlay");
+                    toggleProperty(formContainer, "show");
+                    toggleProperty(formContainer, "hidden");
+    
+                    toggleProperty(chatContainer, "overlay");
+                    toggleProperty(chatContainer, "underlay");
+                });
+            }
+
+
             chatContainer.addEventListener("click", function(event) {
 
                 if (event.target.classList.contains("message-control")) {
