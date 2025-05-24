@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import dayjs from "dayjs";
 
 type Message = {
     "id": number,
@@ -24,6 +25,27 @@ const idIterator = infiniteSequence();
 
 server.use(cors());
 server.use(express.json());
+
+// Функция, которая добавляет системное сообщение
+function addMidnightMessage() {
+    const currentTimeStr = dayjs().format("D MMMM YYYY");
+    const timeMessage: Message = {
+        id: idIterator.next().value as number,
+        username: "System",
+        text: `<div>${currentTimeStr}</div>`,
+        timestamp: dayjs().toISOString(),
+    };
+    messages.push(timeMessage);
+}
+
+setInterval(checkMidnight, 1000);
+
+function checkMidnight() {
+  const now = dayjs();
+  if (now.hour() === 0 && now.minute() === 0 && now.second() === 0) {
+    addMidnightMessage();
+  }
+}
 
 // server.get("/", function (req: Request, res: Response) {
 //     res.status(200).json("Hello from backend");
@@ -61,10 +83,10 @@ server.post("/messages", function (req: Request, res: Response) {
     const newMessage = {
         id: idIterator.next().value as number,
         text,
-        timestamp: new Date().toISOString(),
+        timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
         username,
     };
-
+    
     messages.push(newMessage);
     res.status(201).send(newMessage);
 });
