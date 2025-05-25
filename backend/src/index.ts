@@ -7,6 +7,7 @@ type Message = {
     "username": string,
     "text": string,
     "timestamp": string,
+    "lifetime": number,
 };
 
 const server = express();
@@ -34,6 +35,7 @@ function addMidnightMessage() {
         username: "System",
         text: `<div>${currentTimeStr}</div>`,
         timestamp: dayjs().toISOString(),
+        lifetime: 84500,
     };
     messages.push(timeMessage);
 }
@@ -50,6 +52,17 @@ function checkMidnight() {
 // server.get("/", function (req: Request, res: Response) {
 //     res.status(200).json("Hello from backend");
 // });
+
+function addMessageWithLifetime(message: Message) {
+    messages.push(message);
+
+    setTimeout(() => {
+        const messageIndex = messages.findIndex(m => m.id === message.id);
+        if (messageIndex !== -1) {
+            messages.splice(messageIndex, 1);
+        }
+    }, message.lifetime * 1000);
+}
 
 server.get("/messages", function (req: Request, res: Response) {
     res.status(200).json([...messages]);
@@ -85,11 +98,32 @@ server.post("/messages", function (req: Request, res: Response) {
         text,
         timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
         username,
+        lifetime: 60,
     };
     
-    messages.push(newMessage);
+    //messages.push(newMessage);
+    addMessageWithLifetime(newMessage);
     res.status(201).send(newMessage);
 });
+
+server.delete("/messages/:id", function (req: Request, res: Response) {
+    const messageId = parseInt(req.params.id, 10);
+
+    const messageIndex = messages.findIndex(message => message.id === messageId);
+
+    if (messageIndex === -1) {
+        res.status(404).send({
+            message: "Message not found",
+        });
+        return;
+    }
+
+    messages.splice(messageIndex, 1);
+    res.status(200).send({
+        message: "Message deleted successfully",
+    });
+});
+
 
 server.listen(PORT, function () {
     console.log(`[server]: Server is running at http://localhost:${PORT}`);
