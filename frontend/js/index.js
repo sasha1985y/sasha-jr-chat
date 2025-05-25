@@ -34,13 +34,49 @@ function showElement(template, container) {
     container.appendChild(currentElement);
 }
 
+function deleteMessage(messageId) {
+    fetch(`http://localhost:4000/messages/${messageId}`, {
+        method: "DELETE",
+    })
+        .then(function (response) {
+            if (response.status !== 200) {
+                throw new Error("Couldn't delete the message");
+            }
+
+            return response.json();
+        })
+        .catch(function (error) {
+            console.error(error);
+        });
+}
+
 function renderMessages(messages, container) {
     let index = 0;
     for (const message of messages) {
         const messageElement = document.createElement("article");
         messageElement.className = "message fr-view";
+        messageElement.dataset.messageId = message.id;
 
+        // Время жизни сообщения (например, 60 секунд)
         
+        function startCountdown() {
+            if (messageElement) {
+                // const lifetimeSeconds = 60; 
+                // message.lifetime = lifetimeSeconds; // добавляем свойство
+                
+                const countdownDiv = messageElement.querySelector(".message-delete");
+                const timerInterval = setInterval(() => {
+                    message.lifetime--;
+                    if (message.lifetime <= 0) {
+                        clearInterval(timerInterval);
+                        messageElement.remove();
+                    } else {
+                        countdownDiv.textContent = message.lifetime;
+                    }
+                }, 1000);
+            }
+        }
+
         if (index % 2 !== 0) {
             messageElement.classList.add("odd-numbered");
         }
@@ -57,8 +93,14 @@ function renderMessages(messages, container) {
 
         
         if (container) {
-            container.appendChild(messageElement);
+            console.log(Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId), Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId), messageElement.dataset.messageId);
+            if (!Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId)) {
+                startCountdown(messageElement);
+                container.appendChild(messageElement);
+            }
+            //startCountdown(!Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId));
         }
+        
         index++;
     }
     
@@ -82,7 +124,7 @@ function getMessages(container, cb) {
             return messagesResponse.json();
         })
         .then(function (messagesList) {
-            console.log(messagesList);
+            console.log(Date(), messagesList);
             renderMessages(messagesList, container);
         })
         .catch(function (error) {
@@ -151,7 +193,6 @@ function initForm(container) {
                 toggleProperty(container, "overlay");
                 toggleProperty(container, "underlay");
 
-                container.innerHTML = "";
                 getMessages(container, scrollToBottom);
             })
             .catch(function (error) {
@@ -173,7 +214,6 @@ function initChat(container) {
 
     } loginName.value = initApp();
     
-    getMessages(container, scrollToBottom);
     setInterval(getMessages, 3000);
     initForm(container);
 }
@@ -229,6 +269,7 @@ function toggleProperty(element, classprop) {
     element.classList.toggle(classprop);
 }
 
+
 function toggleBtnLogic() {
     if (currentElement && currentElement.id === "element1") {
 
@@ -241,6 +282,17 @@ function toggleBtnLogic() {
 
         if (chatContainer) {
             initChat(chatContainer);
+
+            chatContainer.addEventListener("click", function(event) {
+                if (event.target.classList.contains("delete-control-btn")) {
+                    const messageArticle = event.target.closest("article");
+                    if (messageArticle) {
+                        const messageId = messageArticle.dataset.messageId;
+                        messageArticle.remove();
+                        deleteMessage(messageId);
+                    }
+                }
+            });
 
             const toggleMenuChatBtn = document.querySelector(".toggle-menu-chat-btn");
             const formContainer = document.querySelector("form");
