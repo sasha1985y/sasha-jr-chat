@@ -15,6 +15,7 @@
     --app-font-size: 16px;
     --app-font-family: "Inter", sans-serif;
     --prsel-background: "✉️";
+    --app-trash: "🗑";
 }
 
 .hidden {
@@ -269,6 +270,10 @@ h1 {
     font-weight: 600;
 }
 
+.message-delete::before {
+    content: var(--app-trash);
+}
+
 .message-control {
     border: solid 0 var(--no-color-background);
     background-color: var(--no-color-background);
@@ -293,6 +298,7 @@ h1 {
 .message p:has(span),
 .message p:has(em),
 .message p:has(img),
+.message p:has(table),
 p.has-text {
     padding: 3%;
     border: solid 1px var(--gray-color-background);
@@ -306,6 +312,7 @@ p.has-text {
 .message p:has(span):hover,
 .message p:has(em):hover,
 .message p:has(img):hover,
+.message p:has(table):hover,
 p.has-text:hover {
     border: solid 1px var(--blue-color-background);
 }
@@ -315,7 +322,7 @@ p.has-text:hover {
     display: flex;
     justify-content: center;
     width: 70vw;
-    margin-top: 40vh;
+    margin-top: 5vh;
 }
 
 /*форма ввода*/
