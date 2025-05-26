@@ -34,22 +34,6 @@ function showElement(template, container) {
     container.appendChild(currentElement);
 }
 
-function deleteMessage(messageId) {
-    fetch(`http://localhost:4000/messages/${messageId}`, {
-        method: "DELETE",
-    })
-        .then(function (response) {
-            if (response.status !== 200) {
-                throw new Error("Couldn't delete the message");
-            }
-
-            return response.json();
-        })
-        .catch(function (error) {
-            console.error(error);
-        });
-}
-
 function renderMessages(messages, container) {
     let index = 0;
     for (const message of messages) {
@@ -201,6 +185,22 @@ function initForm(container) {
             });
 
     }
+}
+
+function deleteMessage(messageId) {
+    fetch(`http://localhost:4000/messages/${messageId}`, {
+        method: "DELETE",
+    })
+        .then(function (response) {
+            if (response.status !== 200) {
+                throw new Error("Couldn't delete the message");
+            }
+
+            return response.json();
+        })
+        .catch(function (error) {
+            console.error(error);
+        });
 }
 
 function initChat(container) {
