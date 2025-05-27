@@ -40,13 +40,9 @@ function renderMessages(messages, container) {
         const messageElement = document.createElement("article");
         messageElement.className = "message fr-view";
         messageElement.dataset.messageId = message.id;
-
-        // Время жизни сообщения (например, 60 секунд)
         
         function startCountdown() {
             if (messageElement) {
-                // const lifetimeSeconds = 60; 
-                // message.lifetime = lifetimeSeconds; // добавляем свойство
                 
                 const countdownDiv = messageElement.querySelector(".message-delete");
                 const timerInterval = setInterval(() => {
@@ -82,7 +78,6 @@ function renderMessages(messages, container) {
                 startCountdown(messageElement);
                 container.appendChild(messageElement);
             }
-            //startCountdown(!Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId));
         }
         
         index++;
@@ -96,6 +91,7 @@ function renderMessages(messages, container) {
 }
 
 function getMessages(container, cb) {
+
     const formSubmitInfo = document.querySelector(".form-submit-info");
     fetch("http://localhost:4000/messages", {
         method: "GET",
@@ -108,6 +104,7 @@ function getMessages(container, cb) {
             return messagesResponse.json();
         })
         .then(function (messagesList) {
+
             console.log(Date(), messagesList);
             renderMessages(messagesList, container);
         })
@@ -187,6 +184,30 @@ function initForm(container) {
     }
 }
 
+function editMessage(messageId, newText) {
+    fetch(`http://localhost:4000/messages/${messageId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: newText }),
+    })
+        .then(function (response) {
+            if (response.status !== 200) {
+                throw new Error("Couldn't update the message");
+            }
+
+            return response.json();
+        })
+        // .then(function () {
+        //     const chatContainer = document.querySelector(".messages");
+        //     getMessages(chatContainer, scrollToBottom);
+        // })
+        .catch(function (error) {
+            console.error(error);
+        });
+}
+
 function deleteMessage(messageId) {
     fetch(`http://localhost:4000/messages/${messageId}`, {
         method: "DELETE",
@@ -249,6 +270,9 @@ function initApp() {
 
 // При загрузке страницы показываем первый элемент
 window.onload = () => {
+    if (localStorage.getItem(USERNAME_REC)) { 
+        localStorage.removeItem(USERNAME_REC);
+    }
     showElement(template1, main);
     mode = "greeting";
     modeIndex.textContent = mode;
@@ -282,6 +306,7 @@ function toggleBtnLogic() {
 
         if (chatContainer) {
             initChat(chatContainer);
+            getMessages(chatContainer, scrollToBottom);
 
             chatContainer.addEventListener("click", function(event) {
                 if (event.target.classList.contains("delete-control-btn")) {
@@ -290,6 +315,20 @@ function toggleBtnLogic() {
                         const messageId = messageArticle.dataset.messageId;
                         messageArticle.remove();
                         deleteMessage(messageId);
+                    }
+                }
+            });
+
+            // В обработчике клика на кнопку редактирования
+            chatContainer.addEventListener("click", function (event) {
+                if (event.target.classList.contains("edit-control-btn")) {
+                    const messageArticle = event.target.closest("article");
+                    const messageArticleText = messageArticle.querySelector(".has-text");
+                    const messageId = messageArticle.dataset.messageId;
+                    const newText = prompt("Enter new text:");
+                    if (newText) {
+                        messageArticleText.textContent = newText;
+                        editMessage(messageId, newText);
                     }
                 }
             });
