@@ -35,9 +35,24 @@ function addMidnightMessage() {
         username: "System",
         text: `<div>${currentTimeStr}</div>`,
         timestamp: dayjs().toISOString(),
-        lifetime: 84500,
+        lifetime: 86400,
     };
+    
     messages.push(timeMessage);
+
+    const timerInterval = setInterval(() => {
+        timeMessage.lifetime--;
+
+        if (timeMessage.lifetime <= 0) {
+            const systemMessageIndex = messages.findIndex(message => message.username === "System");
+            if (systemMessageIndex !== -1) {
+                messages.splice(systemMessageIndex, 1); // Удаляем сообщение по индексу
+            }
+
+            clearInterval(timerInterval);
+        }
+    }, 1000);
+
 }
 
 setInterval(checkMidnight, 1000);
@@ -49,10 +64,6 @@ function checkMidnight() {
   }
 }
 
-// server.get("/", function (req: Request, res: Response) {
-//     res.status(200).json("Hello from backend");
-// });
-
 function addMessageWithLifetime(message: Message) {
     messages.push(message);
 
@@ -62,6 +73,10 @@ function addMessageWithLifetime(message: Message) {
             messages.splice(messageIndex, 1);
         }
     }, message.lifetime * 1000);
+
+    setInterval(() => {
+        message.lifetime--;
+    }, 1000);
 }
 
 server.get("/messages", function (req: Request, res: Response) {
@@ -104,6 +119,30 @@ server.post("/messages", function (req: Request, res: Response) {
     //messages.push(newMessage);
     addMessageWithLifetime(newMessage);
     res.status(201).send(newMessage);
+});
+
+server.patch("/messages/:id", function (req: Request, res: Response) {
+    const messageId = parseInt(req.params.id, 10);
+    const { text } = req.body;
+
+    const messageIndex = messages.findIndex(message => message.id === messageId);
+
+    if (messageIndex === -1) {
+        res.status(404).send({
+            message: "Message not found",
+        });
+        return;
+    }
+
+    if (typeof text !== "string" || text.length < 1 || text.length > 500) {
+        res.status(400).send({
+            message: "Incorrect message text",
+        });
+        return;
+    }
+
+    messages[messageIndex].text = text;
+    res.status(200).send(messages[messageIndex]);
 });
 
 server.delete("/messages/:id", function (req: Request, res: Response) {
