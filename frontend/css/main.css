@@ -6,6 +6,7 @@
     --blue-color-background: #0033FF;
     --no-color-background: #ffffff00;
     --red-color-background: #CA150C;
+    --chat-indicator-background: salmon;
     --box-shadow-color: rgba(192, 192, 192, 0.699);
     --radial-gradient-chat_1: radial-gradient(40% 40% at 40% 80%, #FF86E1, transparent);
     --radial-gradient-chat_2: radial-gradient(20% 30% at 60% 60%, #89BCFF, transparent);
@@ -127,7 +128,7 @@ body {
 }
 
 .mode-index {
-    color: var(--blue-color-background);
+    color: var(--chat-indicator-background);
     width: 5%;
     height: 2%;
 }
