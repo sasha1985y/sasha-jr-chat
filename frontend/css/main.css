@@ -220,12 +220,16 @@ h1 {
 }
 
 .messages {
+    position: absolute;
+    top: 5%;
     width: 70vw;
-    height: 70vh;
+    height: 85vh;
     overflow: auto;
 }
 
 .toggle-menu-chat-container {
+    position: absolute;
+    top: 90%;
     display: flex;
     justify-content: end;
     width: 90vw;
