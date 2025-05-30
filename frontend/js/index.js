@@ -35,87 +35,107 @@ function showElement(template, container) {
 }
 
 function renderMessages(messages, container) {
-    let index = 0;
-    for (const message of messages) {
-        const messageElement = document.createElement("article");
-        messageElement.className = "message fr-view";
-        messageElement.dataset.messageId = message.id;
-        
-        function startCountdown() {
-            if (messageElement) {
-                
-                const countdownDiv = messageElement.querySelector(".message-delete");
-                const timerInterval = setInterval(() => {
-                    message.lifetime--;
-                    if (message.lifetime <= 0) {
-                        clearInterval(timerInterval);
-                        messageElement.remove();
-                    } else {
-                        countdownDiv.textContent = message.lifetime;
-                    }
-                }, 1000);
+    const existingMessages = Array.from(container.querySelectorAll('.message')).reduce((acc, el) => {
+        acc[el.dataset.messageId] = el;
+        return acc;
+    }, {});
+
+    // Обрабатываем все сообщения с сервера
+    messages.forEach((message, index) => {
+        const msgId = message.id.toString();
+
+        if (existingMessages[msgId]) {
+            // Уже есть сообщение — проверяем, нужно ли обновлять текст
+            const existingMsgEl = existingMessages[msgId];
+            const messageTextEl = existingMsgEl.querySelector('.has-text');
+            if (messageTextEl && messageTextEl.textContent !== message.text) {
+                messageTextEl.textContent = message.text;
             }
-        }
+            // Можно добавить проверки для другого содержимого / классов
+        } else {
+            // Новое сообщение — создаём и добавляем
+            const messageElement = document.createElement("article");
+            messageElement.className = "message fr-view";
+            messageElement.dataset.messageId = message.id;
+            if (index % 2 !== 0) messageElement.classList.add("odd-numbered");
+            messageElement.innerHTML = createMessageElement(message);
 
-        if (index % 2 !== 0) {
-            messageElement.classList.add("odd-numbered");
-        }
-
-        messageElement.innerHTML = createMessageElement(message);
-        if (message.username === SYSTEM_USER) {
-            messageElement.querySelectorAll(".removable").forEach(item => item.remove());
-            messageElement.querySelector(".message-text")
-                .classList.remove("message-text");
-            messageElement.classList.add("message-system-text");
-            messageElement.classList.remove("odd-numbered");
-            messageElement.classList.add("system-message");
-        }
-
-        
-        if (container) {
-            console.log(Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId), Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId), messageElement.dataset.messageId);
-            if (!Array.from(container.querySelectorAll(".message")).map(item => item.dataset.messageId).includes(messageElement.dataset.messageId)) {
-                startCountdown(messageElement);
-                container.appendChild(messageElement);
+            // Проверка на системное сообщение
+            if (message.username === SYSTEM_USER) {
+                messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+                messageElement.querySelector(".message-text")
+                    .classList.remove("message-text");
+                messageElement.classList.add("message-system-text");
+                messageElement.classList.remove("odd-numbered");
+                messageElement.classList.add("system-message");
             }
+
+            // Старт таймера удаления
+            startCountdown(messageElement, message);
+
+            container.appendChild(messageElement);
         }
-        
-        index++;
-    }
-    
-    document.querySelectorAll('p').forEach(function (p) {
-        if (p.textContent.trim() !== '') { // Проверяем, не пустой ли текст
-            p.classList.add('has-text'); // Добавляем класс если текст не пустой
+    });
+
+    // Очищаем сообщения, которых больше нет (удаляем)
+    Object.keys(existingMessages).forEach(id => {
+        if (!messages.some(m => m.id.toString() === id)) {
+            existingMessages[id].remove();
+        }
+    });
+
+    // Добавить класс для непустых параграфов
+    document.querySelectorAll('p').forEach(p => {
+        if (p.textContent.trim() !== '') {
+            p.classList.add('has-text');
         }
     });
 }
 
-function getMessages(container, cb) {
+// вспомогательная функция для таймера
+function startCountdown(messageElement, message) {
+    const countdownDiv = messageElement.querySelector('.message-delete');
+    if (!countdownDiv) return;
+    let lifetime = message.lifetime;
+    const timerInterval = setInterval(() => {
+        lifetime--;
+        if (lifetime <= 0) {
+            clearInterval(timerInterval);
+            messageElement.remove();
+        } else {
+            countdownDiv.textContent = lifetime;
+        }
+    }, 1000);
+}
 
-    const formSubmitInfo = document.querySelector(".form-submit-info");
+let previousMessages = [];
+
+function getMessages(container, cb) {
     fetch("http://localhost:4000/messages", {
         method: "GET",
     })
-        .then(function (messagesResponse) {
-            if (messagesResponse.status !== 200) {
-                throw new Error("Couldn't get messages from server");
-            }
-
-            return messagesResponse.json();
-        })
-        .then(function (messagesList) {
-
-            console.log(Date(), messagesList);
+    .then(res => {
+        if (res.status !== 200) throw new Error("Couldn't get messages from server");
+        return res.json();
+    })
+    .then(messagesList => {
+        // сравним старый и новый список (у вас есть previousMessages)
+        if (JSON.stringify(messagesList) !== JSON.stringify(previousMessages)) {
+            previousMessages = messagesList; // обновляем
             renderMessages(messagesList, container);
-        })
-        .catch(function (error) {
-            console.error(error);
-            formSubmitInfo.textContent = error;
-        });
-
-        if (typeof cb === "function") {
-          cb();
         }
+    })
+    .catch(error => {
+        console.error(error);
+        document.querySelector('.form-submit-info').textContent = error;
+    })
+    .finally(() => {
+        setTimeout(() => getMessages(container, cb), 3000);
+    });
+
+    if (typeof cb === "function") {
+        cb();
+    }
 }
 
 function scrollToBottom(container) {
@@ -199,10 +219,7 @@ function editMessage(messageId, newText) {
 
             return response.json();
         })
-        // .then(function () {
-        //     const chatContainer = document.querySelector(".messages");
-        //     getMessages(chatContainer, scrollToBottom);
-        // })
+
         .catch(function (error) {
             console.error(error);
         });
@@ -232,10 +249,11 @@ function initChat(container) {
     if (username === null || username === FAKE_USER) {
         loginName.value = FAKE_USER;
         localStorage.setItem(USERNAME_REC, FAKE_USER);
-
-    } loginName.value = initApp();
+    } 
+    loginName.value = initApp();
     
-    setInterval(getMessages, 3000);
+    // Запускаем getMessages каждые 3 секунды
+    getMessages(container, scrollToBottom);
     initForm(container);
 }
 
