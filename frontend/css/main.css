@@ -326,10 +326,11 @@ p.has-text:hover {
     position: fixed;
     display: flex;
     justify-content: center;
-    width: 70vw;
+    max-width: 70vw;
     margin-top: 5vh;
+    overflow: hidden;
+    word-break: break-all;
 }
-
 /*форма ввода*/
 
 .input-content {
