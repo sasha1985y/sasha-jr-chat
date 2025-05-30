@@ -57,7 +57,6 @@ function renderMessages(messages, container) {
             const messageElement = document.createElement("article");
             messageElement.className = "message fr-view";
             messageElement.dataset.messageId = message.id;
-            if (index % 2 !== 0) messageElement.classList.add("odd-numbered");
             messageElement.innerHTML = createMessageElement(message);
 
             // Проверка на системное сообщение
@@ -73,8 +72,8 @@ function renderMessages(messages, container) {
             // Проверка на автора сообщения
             if (message.username !== username) {
                 messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+                messageElement.classList.toggle("odd-numbered");
             }
-
 
             // Старт таймера удаления
             startCountdown(messageElement, message);
