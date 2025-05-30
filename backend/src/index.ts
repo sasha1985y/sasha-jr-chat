@@ -83,6 +83,7 @@ server.get("/messages", function (req: Request, res: Response) {
     res.status(200).json([...messages]);
 });
 
+
 server.post("/messages", function (req: Request, res: Response) {
     const { username, text } = req.body;
 
