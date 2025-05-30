@@ -70,6 +70,12 @@ function renderMessages(messages, container) {
                 messageElement.classList.add("system-message");
             }
 
+            // Проверка на автора сообщения
+            if (message.username !== username) {
+                messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+            }
+
+
             // Старт таймера удаления
             startCountdown(messageElement, message);
 
