@@ -1,15 +1,867 @@
-In Buenos Aires, a deadly snowfall has covered the streets — if you're not properly covered... you'll die instantly.
+проанализируй следующий код и помоги решить мне три задачи:
+1) Мне нужно, чтобы в сообщении, которое я не создал, то есть создал кто-то другой,
+то есть другой пользователь, у которого
+<div class="message-author removable">${message.username}</div> отличается от моего
+я не смог ни удалить, ни отредактировать. Желательно, чтобы кнопка
+<button class="message-control removable"></button> отсутствовала в DOM. Так же,
+чтобы и другие пользователи не иогли удалять или редактировать мои сообщения.
 
-IDEA: Tizi
-CODE: bubby_pz33
-Big thanks to this guy for helping with the coding — absolute legend.
+2) неа сервере дописать валидацию так, чтобы сообщение об ошибке четко сообщало,
+что конкретно пошло не так. То есть вместо двух сообщений, которые у нас есть сейчас,
+нужно, чтобы было шесть разных под каждый кейс.
 
-A new option has been added to start with an outdoor outfit. You can choose the one you prefer by creating an open-world game and checking the sandbox options.
+3) Файл index.ts, в котором содержится серверная логика должен стать основой для приложения
+на Django 5.2.1 с использованием Django rest framework (latest), которое выполняет  те же
+функции, которые описаны в index.ts.
 
-This mod includes deadly snow, not eternal snow, so for a full experience I suggest combining it with the Cryogenic Winter mod and enabling the eternal snow option.
+файл с серверной логикой приложения:
+index.ts
+import express, { Request, Response } from "express";
+import cors from "cors";
+import dayjs from "dayjs";
 
-If you take off even a single piece of clothing while it's snowing, you will die immediately — worn-out clothing counts too, so watch out for zombies...
+type Message = {
+    "id": number,
+    "username": string,
+    "text": string,
+    "timestamp": string,
+    "lifetime": number,
+};
 
-If you're inside a building, you're safe. You may even find refuge in vehicles, as long as all windows and doors are closed. But remember to put your clothes back on before going outside!
+const server = express();
+const PORT = 4000;
 
-With this mod, a new project starts, an PZ server inspired by the eternaut, needs funding
+const messages: Message[] = [];
+
+function* infiniteSequence() {
+    let i = 0;
+    while (true) {
+        yield ++i;
+    }
+}
+
+const idIterator = infiniteSequence();
+
+server.use(cors());
+server.use(express.json());
+
+// Функция, которая добавляет системное сообщение
+function addMidnightMessage() {
+    const currentTimeStr = dayjs().format("D MMMM YYYY");
+    const timeMessage: Message = {
+        id: idIterator.next().value as number,
+        username: "System",
+        text: `<div>${currentTimeStr}</div>`,
+        timestamp: dayjs().toISOString(),
+        lifetime: 86400,
+    };
+    
+    messages.push(timeMessage);
+
+    const timerInterval = setInterval(() => {
+        timeMessage.lifetime--;
+
+        if (timeMessage.lifetime <= 0) {
+            const systemMessageIndex = messages.findIndex(message => message.username === "System");
+            if (systemMessageIndex !== -1) {
+                messages.splice(systemMessageIndex, 1); // Удаляем сообщение по индексу
+            }
+
+            clearInterval(timerInterval);
+        }
+    }, 1000);
+
+}
+
+setInterval(checkMidnight, 1000);
+
+function checkMidnight() {
+  const now = dayjs();
+  if (now.hour() === 0 && now.minute() === 0 && now.second() === 0) {
+    addMidnightMessage();
+  }
+}
+
+function addMessageWithLifetime(message: Message) {
+    messages.push(message);
+
+    setTimeout(() => {
+        const messageIndex = messages.findIndex(m => m.id === message.id);
+        if (messageIndex !== -1) {
+            messages.splice(messageIndex, 1);
+        }
+    }, message.lifetime * 1000);
+
+    setInterval(() => {
+        message.lifetime--;
+    }, 1000);
+}
+
+server.get("/messages", function (req: Request, res: Response) {
+    res.status(200).json([...messages]);
+});
+
+
+server.post("/messages", function (req: Request, res: Response) {
+    const { username, text } = req.body;
+
+    // 2 Стратегии валидации
+    //   1. Проверяются все ошибки и отправляются скопом
+    //   2. Проверка останавливается на первой попавшейся ошибке и отправляется эта ошибка
+
+    // *Некрасивенько, что в одном if проводятся сразу все проверки username
+    // потому что сложно сформировать адекватное сообщение об ошибке
+    if (typeof username !== "string" || username.length < 2 || username.length > 50) {
+        res.status(400).send({
+            message: "Incorrect username",
+        });
+
+        return;
+    }
+
+    if (typeof text !== "string" || text.length < 1 || text.length > 500) {
+        res.status(400).send({
+            message: "Incorrect message text",
+        });
+
+        return;
+    }
+
+    const newMessage = {
+        id: idIterator.next().value as number,
+        text,
+        timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
+        username,
+        lifetime: 60,
+    };
+    
+    //messages.push(newMessage);
+    addMessageWithLifetime(newMessage);
+    res.status(201).send(newMessage);
+});
+
+server.patch("/messages/:id", function (req: Request, res: Response) {
+    const messageId = parseInt(req.params.id, 10);
+    const { text } = req.body;
+
+    const messageIndex = messages.findIndex(message => message.id === messageId);
+
+    if (messageIndex === -1) {
+        res.status(404).send({
+            message: "Message not found",
+        });
+        return;
+    }
+
+    if (typeof text !== "string" || text.length < 1 || text.length > 500) {
+        res.status(400).send({
+            message: "Incorrect message text",
+        });
+        return;
+    }
+
+    messages[messageIndex].text = text;
+    res.status(200).send(messages[messageIndex]);
+});
+
+server.delete("/messages/:id", function (req: Request, res: Response) {
+    const messageId = parseInt(req.params.id, 10);
+
+    const messageIndex = messages.findIndex(message => message.id === messageId);
+
+    if (messageIndex === -1) {
+        res.status(404).send({
+            message: "Message not found",
+        });
+        return;
+    }
+
+    messages.splice(messageIndex, 1);
+    res.status(200).send({
+        message: "Message deleted successfully",
+    });
+});
+
+
+server.listen(PORT, function () {
+    console.log(`[server]: Server is running at http://localhost:${PORT}`);
+});
+
+файлы с компонентами:
+chat-options-btn-layout.js
+export function createChatOptionsBtn() {
+    return (`
+        <button type="button" id="chat-options-button" class="chat-options-btn"></button>
+    `)
+}
+
+header-chat-lable-layout.js
+export function createChatLable() {
+    return (`
+        <img src="./img/Logo.svg" alt="logo">
+        <span>Online Chat</span>
+    `)
+}
+
+message-element-layout.js
+export function createMessageElement(message) {
+    return (`
+                <div class="message-popup-container removable"></div>
+                <div class="message-panel">
+                    <div class="message-author removable">${message.username}</div>
+                    <div class="message-delete">${message.lifetime}</div>
+                    <button class="message-control removable"></button>
+                </div>
+                <p class="message-text">${message.text}</p>
+                <time class="removable">${message.timestamp}</time>
+            `)
+}
+
+message-popup-layout.js
+export function createMessagePopup() {
+    return (`
+                <div class="message-popup">
+                    <div class="message-management-block">
+                        <div class="close-block">
+                            <button class="view-control-btn control-btn hidden">View</button>
+                            <button class="close-control-btn">X</button>
+                        </div>
+                        <button class="edit-control-btn control-btn">Edit</button>
+                        <button class="delete-control-btn control-btn">Delete</button>
+                    </div>
+                    <div class="message-info-block">
+                        <button class="item-control-btn control-btn hidden">Item</button>
+                    </div>
+                </div>
+            `)
+}
+
+toggle-button-layout.js
+export function createToggleBtn() {
+    return (`
+        <button id="toggle-button" class="toggle-btn">GO Chat!</button>
+    `)
+}
+
+файл экспорта шаблонов:
+layout.js
+const template1 = document.getElementById("template1");
+const template2 = document.getElementById("template2");
+
+export {
+  template1,
+  template2,
+}
+
+файл реэкспорта:
+main.js
+import { createMessageElement } from "./components/message-element-layout.js";
+import { createMessagePopup } from "./components/message-popup-layout.js";
+import { createChatLable } from "./components/header-chat-lable-layout.js";
+import { createToggleBtn } from "./components/toggle-button-layout.js";
+import { createChatOptionsBtn } from "./components/chat-options-btn-layout.js";
+import { 
+    template1,
+    template2,
+} from "./layout.js";
+
+export {
+
+    //рендер
+    createMessageElement,
+    createMessagePopup,
+    createChatLable,
+    createToggleBtn,
+    createChatOptionsBtn,
+
+    //элементы разметки
+    template1,
+    template2,
+}
+
+файл с логикой фронтенда:
+index.js
+import {
+    createMessageElement,
+    createMessagePopup,
+    createChatLable,
+    createToggleBtn,
+    createChatOptionsBtn,
+    template1,
+    template2,
+} from "./main.js";
+
+const toggleButton = document.getElementById("toggle-button");
+const main = document.querySelector("main");
+const headerChatLable = document.querySelector(".header-chat-lable");
+const headerChatManager = document.querySelector(".header-chat-manager");
+const modeIndex = document.querySelector(".mode-index");
+
+let currentElement = null;
+let mode = "";
+headerChatLable.innerHTML = "";
+
+const USERNAME_REC = "username";
+const FAKE_USER = "Anonimous user";
+const SYSTEM_USER = "System";
+let username = null;
+
+function showElement(template, container) {
+
+    if (currentElement) {
+        currentElement.remove();
+    }
+
+    currentElement = template.content.cloneNode(true).firstElementChild;
+    container.innerHTML = "";
+    container.appendChild(currentElement);
+}
+
+function renderMessages(messages, container) {
+    const existingMessages = Array.from(container.querySelectorAll('.message')).reduce((acc, el) => {
+        acc[el.dataset.messageId] = el;
+        return acc;
+    }, {});
+
+    // Обрабатываем все сообщения с сервера
+    messages.forEach((message, index) => {
+        const msgId = message.id.toString();
+
+        if (existingMessages[msgId]) {
+            // Уже есть сообщение — проверяем, нужно ли обновлять текст
+            const existingMsgEl = existingMessages[msgId];
+            const messageTextEl = existingMsgEl.querySelector(".has-text");
+            if (messageTextEl && messageTextEl.textContent !== message.text) {
+                messageTextEl.innerHTML = message.text;
+            }
+            // Можно добавить проверки для другого содержимого / классов
+        } else {
+            // Новое сообщение — создаём и добавляем
+            const messageElement = document.createElement("article");
+            messageElement.className = "message fr-view";
+            messageElement.dataset.messageId = message.id;
+            if (index % 2 !== 0) messageElement.classList.add("odd-numbered");
+            messageElement.innerHTML = createMessageElement(message);
+
+            // Проверка на системное сообщение
+            if (message.username === SYSTEM_USER) {
+                messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+                messageElement.querySelector(".message-text")
+                    .classList.remove("message-text");
+                messageElement.classList.add("message-system-text");
+                messageElement.classList.remove("odd-numbered");
+                messageElement.classList.add("system-message");
+            }
+
+            // Старт таймера удаления
+            startCountdown(messageElement, message);
+
+            container.appendChild(messageElement);
+        }
+    });
+
+    // Очищаем сообщения, которых больше нет (удаляем)
+    Object.keys(existingMessages).forEach(id => {
+        if (!messages.some(m => m.id.toString() === id)) {
+            existingMessages[id].remove();
+        }
+    });
+
+    // Добавить класс для непустых параграфов
+    document.querySelectorAll("p").forEach(p => {
+        if (p.textContent.trim() !== "") {
+            p.classList.add("has-text");
+        }
+    });
+}
+
+// вспомогательная функция для таймера
+function startCountdown(messageElement, message) {
+    const countdownDiv = messageElement.querySelector('.message-delete');
+    if (!countdownDiv) return;
+    let lifetime = message.lifetime;
+    const timerInterval = setInterval(() => {
+        lifetime--;
+        if (lifetime <= 0) {
+            clearInterval(timerInterval);
+            messageElement.remove();
+        } else {
+            countdownDiv.textContent = lifetime;
+        }
+    }, 1000);
+}
+
+let previousMessages = [];
+
+function getMessages(container, cb) {
+    fetch("http://localhost:4000/messages", {
+        method: "GET",
+    })
+    .then(res => {
+        if (res.status !== 200) throw new Error("Couldn't get messages from server");
+        return res.json();
+    })
+    .then(messagesList => {
+        // сравним старый и новый список (у вас есть previousMessages)
+        if (JSON.stringify(messagesList) !== JSON.stringify(previousMessages)) {
+            previousMessages = messagesList; // обновляем
+            renderMessages(messagesList, container);
+        }
+    })
+    .catch(error => {
+        console.error(error);
+        document.querySelector('.form-submit-info').textContent = error;
+    })
+    .finally(() => {
+        setTimeout(() => getMessages(container, cb), 3000);
+    });
+
+    if (typeof cb === "function") {
+        cb();
+    }
+}
+
+function scrollToBottom(container) {
+    if (container) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function initForm(container) {
+    const formContainer = document.querySelector("form");
+    const formTextField = formContainer.querySelector("textarea");
+    const formSubmitButton = formContainer.querySelector("button");
+    const formSubmitInfo = document.querySelector(".form-submit-info");
+
+    formContainer.onsubmit = function (evt) {
+        evt.preventDefault();
+
+        console.log(`username: ${username}`);
+        const formData = new FormData(evt.target);
+
+        const messageData = {
+            username: formData.get("username"),
+            text: formData.get("text"),
+        };
+
+        formTextField.disabled = true;
+        formSubmitButton.disabled = true;
+        formSubmitInfo.textContent = "Сообщение отправляется...";
+
+        fetch("http://localhost:4000/messages", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(messageData),
+        })
+            .then(function (newMessageResponse) {
+                console.log(newMessageResponse.status);
+
+                if (newMessageResponse.status !== 200) {
+                    //
+                }
+
+                formTextField.disabled = false;
+                formTextField.value = "";
+                formSubmitButton.disabled = false;
+                formSubmitInfo.textContent = "";
+
+                const formContainer = document.querySelector("form");
+
+                toggleProperty(formContainer, "overlay");
+                toggleProperty(formContainer, "underlay");
+                toggleProperty(formContainer, "show");
+                toggleProperty(formContainer, "hidden");
+
+                toggleProperty(container, "overlay");
+                toggleProperty(container, "underlay");
+
+                getMessages(container, scrollToBottom);
+            })
+            .catch(function (error) {
+                formSubmitInfo.textContent = error;
+                console.error(error);
+            });
+
+    }
+}
+
+function editMessage(messageId, newText) {
+    fetch(`http://localhost:4000/messages/${messageId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: newText }),
+    })
+        .then(function (response) {
+            if (response.status !== 200) {
+                throw new Error("Couldn't update the message");
+            }
+
+            return response.json();
+        })
+
+        .catch(function (error) {
+            console.error(error);
+        });
+}
+
+function deleteMessage(messageId) {
+    fetch(`http://localhost:4000/messages/${messageId}`, {
+        method: "DELETE",
+    })
+        .then(function (response) {
+            if (response.status !== 200) {
+                throw new Error("Couldn't delete the message");
+            }
+
+            return response.json();
+        })
+        .catch(function (error) {
+            console.error(error);
+        });
+}
+
+function initChat(container) {
+    const formContainer = document.querySelector("form");
+    const loginName = formContainer.querySelector("input");
+    initApp();
+
+    if (username === null || username === FAKE_USER) {
+        loginName.value = FAKE_USER;
+        localStorage.setItem(USERNAME_REC, FAKE_USER);
+    } 
+    loginName.value = initApp();
+    
+    // Запускаем getMessages каждые 3 секунды
+    getMessages(container, scrollToBottom);
+    initForm(container);
+}
+
+function initUsernameForm() {
+    const usernameContainer = document.querySelector(".username");
+    const usernameForm = usernameContainer.querySelector("form");
+    
+    
+    usernameForm.onsubmit = function (evt) {
+        evt.preventDefault();
+        
+        const formElement = evt.target;
+        const formData = new FormData(formElement);
+        const enteredUsername = formData.get("username");
+        
+        localStorage.setItem(USERNAME_REC, enteredUsername);
+        
+        usernameContainer.close();
+        usernameForm.onsubmit = null;
+    };
+    
+    usernameContainer.showModal();
+}
+
+function initApp() {
+    username = localStorage.getItem(USERNAME_REC);
+    if (username === null && mode === "greeting") {
+        initUsernameForm();
+        return;
+    } return username;
+}
+
+// При загрузке страницы показываем первый элемент
+window.onload = () => {
+    if (localStorage.getItem(USERNAME_REC)) { 
+        localStorage.removeItem(USERNAME_REC);
+    }
+    showElement(template1, main);
+    mode = "greeting";
+    modeIndex.textContent = mode;
+    initApp();
+};
+
+function goGreetingMenu() {
+    showElement(template1, main);
+    mode = "greeting";
+    headerChatLable.innerHTML = "";
+    modeIndex.textContent = mode;
+    headerChatManager.innerHTML = createToggleBtn();
+    const toggleButton = document.getElementById("toggle-button");
+    toggleButton.addEventListener("click", toggleBtnLogic);
+}
+
+function toggleProperty(element, classprop) {
+    element.classList.toggle(classprop);
+}
+
+
+function toggleBtnLogic() {
+    if (currentElement && currentElement.id === "element1") {
+
+        showElement(template2, main);
+        var editor = new FroalaEditor('#example');
+
+        const chatContainer = document.querySelector(".messages");
+
+        mode = "chat";
+
+        if (chatContainer) {
+            initChat(chatContainer);
+            getMessages(chatContainer, scrollToBottom);
+
+            chatContainer.addEventListener("click", function(event) {
+                if (event.target.classList.contains("delete-control-btn")) {
+                    const messageArticle = event.target.closest("article");
+                    if (messageArticle) {
+                        const messageId = messageArticle.dataset.messageId;
+                        messageArticle.remove();
+                        deleteMessage(messageId);
+                    }
+                }
+            });
+
+            // В обработчике клика на кнопку редактирования
+            chatContainer.addEventListener("click", function (event) {
+                if (event.target.classList.contains("edit-control-btn")) {
+                    const messageArticle = event.target.closest("article");
+                    const messageArticleText = messageArticle.querySelector(".has-text");
+                    const messageId = messageArticle.dataset.messageId;
+                    const newText = prompt("Enter new text:");
+                    if (newText) {
+                        messageArticleText.textContent = newText;
+                        editMessage(messageId, newText);
+                    }
+                }
+            });
+
+            const toggleMenuChatBtn = document.querySelector(".toggle-menu-chat-btn");
+            const formContainer = document.querySelector("form");
+
+            if (toggleMenuChatBtn) {
+                
+                toggleMenuChatBtn.addEventListener("click", () => {
+                    toggleProperty(formContainer, "overlay");
+                    toggleProperty(formContainer, "underlay");
+                    toggleProperty(formContainer, "show");
+                    toggleProperty(formContainer, "hidden");
+    
+                    toggleProperty(chatContainer, "overlay");
+                    toggleProperty(chatContainer, "underlay");
+                });
+            }
+
+
+            chatContainer.addEventListener("click", function(event) {
+
+                if (event.target.classList.contains("message-control")) {
+
+                    const messageArticle = event.target.closest("article");
+                    const popupContainer = messageArticle.querySelector(".message-popup-container");
+                    
+                    if (popupContainer) {
+
+                        const messagePopup = createMessagePopup();
+
+                        chatContainer.querySelectorAll(".contains-popup").forEach(place => {
+                            place.innerHTML = "";
+                            popupContainer.innerHTML = messagePopup;
+                        })
+                        
+                        function clearPopupContainer() {
+                            popupContainer.innerHTML = "";
+                        }
+                        
+                        if (messagePopup) {
+                            popupContainer.classList.add("contains-popup");
+                            const closeControlBtn = document.querySelector(".close-control-btn");
+                            if (closeControlBtn) {
+                                closeControlBtn.addEventListener("click", clearPopupContainer);
+                            }
+                        }
+
+                    }
+
+                }
+            });
+        }
+
+
+        headerChatLable.innerHTML = createChatLable();
+        modeIndex.textContent = mode;
+
+        toggleButton.remove();
+
+        headerChatManager.innerHTML = createChatOptionsBtn();
+
+        const chatOptionsBtn = document.getElementById("chat-options-button");
+        const chatOptionsContent = document.querySelector(".chat-options-content");
+
+        //логика перехода обратно к template1
+        if (chatOptionsBtn && chatOptionsContent) {
+            const toggleButton = document.getElementById("toggle-button");
+            const logoutButton = document.getElementById("logout-button");
+
+            toggleButton.addEventListener("click", () => {
+                goGreetingMenu();
+                const usernameContainer = document.querySelector(".username");
+                usernameContainer.showModal();
+                const usernameInput = document.getElementById("username");
+                usernameInput.value = initApp();
+                localStorage.removeItem(USERNAME_REC);
+                initUsernameForm();
+            });
+
+            logoutButton.addEventListener("click", () => {
+                goGreetingMenu();
+                localStorage.removeItem(USERNAME_REC);
+                initApp();
+            });
+
+            //2 способа закрытия управляющего попапа приложения
+        
+            function hideOptionsContent(evt) {
+                if (evt.target !== chatOptionsContent) {
+                    chatOptionsContent.classList.add("hidden");
+                    toggleButton.disabled = true;
+                    logoutButton.disabled = true;
+                }
+            }
+
+            if (chatOptionsContent.classList.contains("hidden")) {
+                main.addEventListener("click", hideOptionsContent);
+            }
+
+            function toggleOptionsContent() {
+                chatOptionsContent.classList.toggle("hidden");
+                toggleButton.toggleAttribute("disabled");
+                logoutButton.toggleAttribute("disabled");
+            }
+
+            chatOptionsBtn.addEventListener("click", toggleOptionsContent);
+        }
+
+    } else {
+
+        showElement(template1, main);
+
+        mode = "greeting";
+
+        headerChatLable.innerHTML = "";
+        modeIndex.textContent = mode;
+
+        headerChatManager.innerHTML = createToggleBtn();
+        toggleButton.addEventListener("click", toggleBtnLogic);
+    }
+}
+
+toggleButton.addEventListener("click", toggleBtnLogic);
+
+разметка приложения:
+index.html
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="./img/Logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="./css/main.css">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0" />
+  <link href='https://cdn.jsdelivr.net/npm/froala-editor@latest/css/froala_editor.pkgd.min.css' rel='stylesheet' type='text/css' />
+  <title>Online Chat v1</title>
+</head>
+<body>
+  <script type='text/javascript' src='https://cdn.jsdelivr.net/npm/froala-editor@latest/js/froala_editor.pkgd.min.js'></script>
+  <header>
+    <div class="header-content">
+      <span class="mode-index"></span>
+      <div class="header-chat-lable">
+        <img src="./img/Logo.svg" alt="logo">
+        <span>Online Chat</span>
+      </div>
+      <div class="header-chat-manager">
+        <button id="toggle-button" class="toggle-btn">GO Chat!</button>
+      </div>
+    </div>
+  </header>
+  <main>
+    <template id="template1">
+      <div id="element1" class="main-greeting-background">
+        <div class="logo-container">
+          <img src="./img/Logo.svg" alt="logo">
+        </div>
+        <h1>Online Chat</h1>
+        <dialog class="username">
+          <form method="POST">
+            <fieldset class="auth-form-content">
+              <label for="username" class="auth-label">Username</label>
+              <input id="username" required type="text" name="username" placeholder="username" autocapitalize="off" autocomplete="off" class="auth-input">
+            </fieldset>
+            <button type="submit" class="auth-btn">Join</button>
+          </form>
+        </dialog>
+      </div>
+    </template>
+    <template id="template2">
+      <section id="element2" class="main-chat-background">
+        <div class="chat-options-container">
+          <div class="chat-options-content hidden">
+            <button type="button" id="toggle-button" class="toggle-btn" disabled>Edit name</button>
+            <button type="button" id="logout-button" class="logout-btn" disabled>Logout</button>
+          </div>
+        </div>
+        <!--
+          2. Отрисовка этого сообщения
+          1. Отправка сообщения на сервер
+            - Валидация сообщения
+          3. Периодическая отрисовка всех сообщений
+        -->
+        <section class="messages overlay"></section>
+        <form action="/" method="POST" class="message-input underlay hidden">
+          <input type="hidden" name="username"/>
+          <textarea id="example" name="text" placeholder="Write a message..." class="input-content"></textarea>
+          <button class="submit-message"></button>
+        </form>
+        <div class="form-submit-info"></div>
+        <div class="toggle-menu-chat-container">
+          <button type="button" class="toggle-menu-chat-btn"></button>
+        </div>
+      </section>
+    </template>
+  </main>
+  <script type="module" src="./js/index.js"></script>
+</body>
+
+</html>
+
+package.json
+{
+  "name": "jr-chat-backend",
+  "version": "0.0.1",
+  "description": "Backend for JavaRush Chat project ",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx tsc",
+    "start": "node dist/index.js",
+    "dev": "npx tsx watch src/index.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/express": "^5.0.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "@types/cors": "^2.8.17",
+    "cors": "^2.8.5",
+    "dayjs": "^1.11.13",
+    "express": "^5.1.0"
+  }
+}
