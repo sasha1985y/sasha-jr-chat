@@ -47,9 +47,9 @@ function renderMessages(messages, container) {
         if (existingMessages[msgId]) {
             // Уже есть сообщение — проверяем, нужно ли обновлять текст
             const existingMsgEl = existingMessages[msgId];
-            const messageTextEl = existingMsgEl.querySelector('.has-text');
+            const messageTextEl = existingMsgEl.querySelector(".has-text");
             if (messageTextEl && messageTextEl.textContent !== message.text) {
-                messageTextEl.textContent = message.text;
+                messageTextEl.innerHTML = message.text;
             }
             // Можно добавить проверки для другого содержимого / классов
         } else {
@@ -85,9 +85,9 @@ function renderMessages(messages, container) {
     });
 
     // Добавить класс для непустых параграфов
-    document.querySelectorAll('p').forEach(p => {
-        if (p.textContent.trim() !== '') {
-            p.classList.add('has-text');
+    document.querySelectorAll("p").forEach(p => {
+        if (p.textContent.trim() !== "") {
+            p.classList.add("has-text");
         }
     });
 }
