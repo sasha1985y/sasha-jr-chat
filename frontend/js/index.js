@@ -19,7 +19,7 @@ let mode = "";
 headerChatLable.innerHTML = "";
 
 const USERNAME_REC = "username";
-const FAKE_USER = "Anonimous user";
+const FAKE_USER = "Anonimous_user";
 const SYSTEM_USER = "System";
 let username = null;
 
@@ -41,7 +41,7 @@ function renderMessages(messages, container) {
     }, {});
 
     // Обрабатываем все сообщения с сервера
-    messages.forEach((message, index) => {
+    messages.forEach((message) => {
         const msgId = message.id.toString();
 
         if (existingMessages[msgId]) {
@@ -71,7 +71,7 @@ function renderMessages(messages, container) {
 
             // Проверка на автора сообщения
             if (message.username !== username) {
-                messageElement.querySelectorAll(".removable").forEach(item => item.remove());
+                //messageElement.querySelectorAll(".removable").forEach(item => item.remove());
                 messageElement.classList.toggle("odd-numbered");
             }
 
@@ -177,12 +177,15 @@ function initForm(container) {
             },
             body: JSON.stringify(messageData),
         })
+            .then(async function (response) {
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message);
+                }
+                return response.json();
+            })
             .then(function (newMessageResponse) {
                 console.log(newMessageResponse.status);
-
-                if (newMessageResponse.status !== 200) {
-                    //
-                }
 
                 formTextField.disabled = false;
                 formTextField.value = "";
@@ -202,37 +205,56 @@ function initForm(container) {
                 getMessages(container, scrollToBottom);
             })
             .catch(function (error) {
-                formSubmitInfo.textContent = error;
+                formSubmitInfo.textContent = error.message;
                 console.error(error);
+                formTextField.disabled = false;
+                formSubmitButton.disabled = false;
             });
 
     }
 }
 
 function editMessage(messageId, newText) {
+    const formSubmitInfo = document.querySelector(".form-submit-info");
     fetch(`http://localhost:4000/messages/${messageId}`, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: newText }),
-    })
-        .then(function (response) {
-            if (response.status !== 200) {
-                throw new Error("Couldn't update the message");
+        body: JSON.stringify(
+            {
+                id: messageId,
+                text: newText,
+                username: localStorage.getItem(USERNAME_REC),
             }
-
+        ),
+    })
+        .then(async function (response) {
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.message);
+            }
             return response.json();
         })
-
         .catch(function (error) {
+            formSubmitInfo.textContent = error.message;
             console.error(error);
         });
 }
 
 function deleteMessage(messageId) {
+    const formSubmitInfo = document.querySelector(".form-submit-info");
     fetch(`http://localhost:4000/messages/${messageId}`, {
         method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(
+            {
+                id: messageId,
+                username: localStorage.getItem(USERNAME_REC),
+            }
+        ),
     })
         .then(function (response) {
             if (response.status !== 200) {
@@ -242,6 +264,7 @@ function deleteMessage(messageId) {
             return response.json();
         })
         .catch(function (error) {
+            formSubmitInfo.textContent = error.message;
             console.error(error);
         });
 }
@@ -336,7 +359,10 @@ function toggleBtnLogic() {
                     const messageArticle = event.target.closest("article");
                     if (messageArticle) {
                         const messageId = messageArticle.dataset.messageId;
-                        messageArticle.remove();
+                        const messageAuthor = messageArticle.querySelector(".message-author");
+                        if (messageAuthor.textContent === username) {
+                            messageArticle.remove();
+                        }
                         deleteMessage(messageId);
                     }
                 }
