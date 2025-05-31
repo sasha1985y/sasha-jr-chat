@@ -87,25 +87,45 @@ server.get("/messages", function (req: Request, res: Response) {
 server.post("/messages", function (req: Request, res: Response) {
     const { username, text } = req.body;
 
-    // 2 Стратегии валидации
-    //   1. Проверяются все ошибки и отправляются скопом
-    //   2. Проверка останавливается на первой попавшейся ошибке и отправляется эта ошибка
-
-    // *Некрасивенько, что в одном if проводятся сразу все проверки username
-    // потому что сложно сформировать адекватное сообщение об ошибке
-    if (typeof username !== "string" || username.length < 2 || username.length > 50) {
+    if (typeof username !== "string") {
         res.status(400).send({
-            message: "Incorrect username",
+            message: "Username must be a string",
         });
-
         return;
     }
 
-    if (typeof text !== "string" || text.length < 1 || text.length > 500) {
+    if (username.length < 2) {
         res.status(400).send({
-            message: "Incorrect message text",
+            message: "Username must be at least 2 characters long",
         });
+        return;
+    }
 
+    if (username.length > 50) {
+        res.status(400).send({
+            message: "Username must be no more than 50 characters long",
+        });
+        return;
+    }
+
+    if (typeof text !== "string") {
+        res.status(400).send({
+            message: "Message text must be a string",
+        });
+        return;
+    }
+
+    if (text.length < 1) {
+        res.status(400).send({
+            message: "Message text must be at least 1 character long",
+        });
+        return;
+    }
+
+    if (text.length > 500) {
+        res.status(400).send({
+            message: "Message text must be no more than 500 characters long",
+        });
         return;
     }
 
@@ -124,10 +144,10 @@ server.post("/messages", function (req: Request, res: Response) {
 
 server.patch("/messages/:id", function (req: Request, res: Response) {
     const messageId = parseInt(req.params.id, 10);
-    const { text } = req.body;
+    const { text, username } = req.body;
 
     const messageIndex = messages.findIndex(message => message.id === messageId);
-
+    
     if (messageIndex === -1) {
         res.status(404).send({
             message: "Message not found",
@@ -135,9 +155,30 @@ server.patch("/messages/:id", function (req: Request, res: Response) {
         return;
     }
 
-    if (typeof text !== "string" || text.length < 1 || text.length > 500) {
+    if (messages[messageIndex].username.trim().replaceAll(" ", "") !== username.trim().replaceAll(" ", ""))  {
+        res.status(403).send({
+            message: "You can only edit your own messages",
+        });
+        return;
+    }
+
+    if (typeof text !== "string") {
         res.status(400).send({
-            message: "Incorrect message text",
+            message: "Message text must be a string",
+        });
+        return;
+    }
+
+    if (text.length < 1) {
+        res.status(400).send({
+            message: "Message text must be at least 1 character long",
+        });
+        return;
+    }
+
+    if (text.length > 500) {
+        res.status(400).send({
+            message: "Message text must be no more than 500 characters long",
         });
         return;
     }
@@ -148,12 +189,20 @@ server.patch("/messages/:id", function (req: Request, res: Response) {
 
 server.delete("/messages/:id", function (req: Request, res: Response) {
     const messageId = parseInt(req.params.id, 10);
+    const { username } = req.body;
 
     const messageIndex = messages.findIndex(message => message.id === messageId);
 
     if (messageIndex === -1) {
         res.status(404).send({
             message: "Message not found",
+        });
+        return;
+    }
+
+    if (messages[messageIndex].username.trim().replaceAll(" ", "") !== username.trim().replaceAll(" ", "")) {
+        res.status(403).send({
+            message: "You can only delete your own messages",
         });
         return;
     }
