@@ -231,7 +231,7 @@ h1 {
     position: absolute;
     top: 90%;
     display: flex;
-    justify-content: end;
+    justify-content: space-between;
     width: 90vw;
     height: auto;
 }
