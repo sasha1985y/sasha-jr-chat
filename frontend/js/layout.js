@@ -37,8 +37,8 @@ const template1 = document.getElementById("template1");
             <textarea id="example" name="text" placeholder="Write a message..." class="input-content"></textarea>
             <button class="submit-message"></button>
           </form>
-          <div class="form-submit-info"></div>
           <div class="toggle-menu-chat-container">
+            <div class="form-submit-info"></div>
             <button type="button" class="toggle-menu-chat-btn"></button>
           </div>
         </section>
