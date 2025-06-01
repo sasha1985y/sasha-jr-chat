@@ -200,6 +200,17 @@ h1 {
     padding: 3% 0 3% 0;
 }
 
+.form-login-info {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    top: 25vh;
+    min-width: 50vw;
+    max-width: auto;
+    height: 5vh;
+    color: var(--chat-indicator-background);
+}
+
 /*Чат*/
 
 .main-chat-background {
