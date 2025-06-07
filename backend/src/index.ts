@@ -101,9 +101,9 @@ server.post("/messages", function (req: Request, res: Response) {
         return;
     }
 
-    if (username.length > 50) {
+    if (username.length > 20) {
         res.status(400).send({
-            message: "Username must be no more than 50 characters long",
+            message: "Username must be no more than 20 characters long",
         });
         return;
     }
