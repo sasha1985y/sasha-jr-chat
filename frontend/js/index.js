@@ -288,6 +288,7 @@ function initChat(container) {
 function initUsernameForm() {
     const usernameContainer = document.querySelector(".username");
     const usernameForm = usernameContainer.querySelector("form");
+    const formLoginInfo = document.querySelector(".form-login-info");
     
     
     usernameForm.onsubmit = function (evt) {
@@ -296,11 +297,21 @@ function initUsernameForm() {
         const formElement = evt.target;
         const formData = new FormData(formElement);
         const enteredUsername = formData.get("username");
+
+        if (typeof enteredUsername !== "string") {
+            formLoginInfo.textContent = "Username must be a string";
+        } else if (enteredUsername.length < 2) {
+            formLoginInfo.textContent = "Username must be at least 2 characters long";
+        } else if (enteredUsername.length > 20) {
+            formLoginInfo.textContent = "Username must be no more than 20 characters long";
+        } else {
+            formLoginInfo.textContent = "";
+            localStorage.setItem(USERNAME_REC, enteredUsername);
+            usernameContainer.close();
+            usernameForm.onsubmit = null;
+        }
+
         
-        localStorage.setItem(USERNAME_REC, enteredUsername);
-        
-        usernameContainer.close();
-        usernameForm.onsubmit = null;
     };
     
     usernameContainer.showModal();
