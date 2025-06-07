@@ -15,6 +15,7 @@
             <button type="submit" class="auth-btn">Join</button>
           </form>
         </dialog>
+        <div class="form-login-info"></div>
       </div>
     </template>
 */
