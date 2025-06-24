@@ -1,0 +1,38 @@
+name: "sasha-jr-chat"
+services:
+  frontend:
+    depends_on:
+      - "backend"
+    image: sasha-frontend
+    build:
+      context: ./frontend
+    ports:
+      - "4001:4001"
+
+  backend:
+    image: sasha-backend
+    build:
+      context: ./backend
+    ports:
+      - "4000:4000"
+
+  database:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=chat
+    ports:
+      - "1985:5432"
+    volumes:
+    - db-data:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: kuyancev1985@mail.ru
+      PGADMIN_DEFAULT_PASSWORD: sashapgadmin4
+    ports:
+      - "5050:80"
+    depends_on:
+      - database
+
+volumes:
+  db-data:
