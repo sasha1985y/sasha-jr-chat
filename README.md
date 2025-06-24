@@ -942,6 +942,14 @@ Nginx должен перенаправлять запросы `/api` на Backe
     // потому что сложно сформировать адекватное сообщение об ошибке
 
 
+https://docs.docker.com/engine/install/ubuntu/#uninstall-docker-engine     удаление docker-engine
+
+docker cp ./config.py sasha-jr-chat-pgadmin-1:/pgadmin4/config.py     копировать файл конфига в контейнер pgadmin4 для включения консоли psql
+
+docker exec sasha-jr-chat-pgadmin-1 cat /pgadmin4/config.py    прочитать файл
+
+docker compose restart pgadmin    перезапуск контейнера
+
 
 
 
