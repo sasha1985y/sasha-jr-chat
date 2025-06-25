@@ -393,23 +393,24 @@ project/
 
 #### Текущая структура папок:
 ```
-project/
+sasha-jr-chat/
 ├── backend/                                  # Серверная часть
 │   ├── dist/                                 # Директория серверной сборки проекта
 │   │   ├── index.js                          # Основной файл сервера после компиляции
-│   ├── node_modules/                         # Исходный код TypeScript
-│   │   ├── packages...                       # Зависимости проекта
-│   ├── src/                                  # Исходный код TypeScript
-│   │   ├── index.ts                          # Основной файл сервера
+│   ├── node_modules/                         # Директория зависимостей проекта Backend
+│   │   ├── packages...                       # Зависимости
+│   ├── src/                                  # Директория исходного кода TypeScript
+│   │   ├── index.ts                          # Исходный код TypeScript
 │   ├── .gitignore                            # .gitignore бэкенда
+│   ├── Dockerfile                            # Dockerfile для Backend
+│   ├── package-lock.json                     # Зависимости для Node.js
 │   ├── package.json                          # Зависимости для Node.js
 │   ├── tsconfig.json                         # Конфигурация TypeScript
-│   ├── Dockerfile                            # Dockerfile для Backend (ещё не создан)
 ├── frontend/                                 # Клиентская часть
 │   ├── css/                                  # Директория стилей
 |   │   ├── main.css                          # Основной файл css
 │   ├── img/                                  # Директория картинок
-|   │   ├── img.svg...                        # картинки
+|   │   ├── images...                         # картинки
 │   ├── js/                                   # Директория логики работы на клиенте
 |   │   ├── components/                       # Директория функциональных компонентов
 |   |   │   ├── chat-options-btn-layout.js    # Файл функционального компонента
@@ -422,12 +423,13 @@ project/
 |   │   ├── index.js                          # Логика работы на клиенте
 |   │   ├── layout.js                         # файл для документирования некоторых элементов разметки
 |   │   ├── main.js                           # Основной файл реэкспорта
+│   ├── Dockerfile                            # Dockerfile для Frontend
 │   ├── index.html                            # Основной файл HTML
-│   ├── nginx.conf                            # Конфигурация Nginx (ещё не создан)
-│   ├── Dockerfile                            # Dockerfile для Frontend (ещё не создан)
-├── docker-compose.yml                        # Docker Compose для управления проектом (ещё не создан)
+│   ├── package-lock.json                     # Зависимости для Node.js
+│   ├── package.json                          # Зависимости для Node.js
+├── compose.yml                               # Docker Compose для управления проектом
 ├── .gitignore                                # .gitignore приложения
-├── README.md                                 # README приложения
+├── README.md                                 # Readme приложения
 ```
 
 **Основные файлы и их назначение:**
