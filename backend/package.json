@@ -5,14 +5,16 @@
   "main": "index.js",
   "scripts": {
     "build": "npx tsc",
-    "start": "node dist/index.js",
-    "dev": "nodemon --watch src --exec npx tsx src/index.ts",
+    "start": "node && dotenvx run -f .env -- dist/index.js",
+    "dev": "dotenvx run -f .env -- nodemon --watch src --exec npx tsx src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@dotenvx/dotenvx": "^1.48.3",
     "@types/express": "^5.0.1",
+    "@types/pg": "^8.15.4",
     "nodemon": "^3.1.10",
     "tsx": "^4.19.3",
     "typescript": "^5.8.3"
@@ -21,6 +23,7 @@
     "@types/cors": "^2.8.17",
     "cors": "^2.8.5",
     "dayjs": "^1.11.13",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
   }
 }
