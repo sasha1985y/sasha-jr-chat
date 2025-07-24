@@ -14,6 +14,9 @@ services:
     command: npm start
 
   backend:
+    depends_on:
+      database:
+        condition: service_healthy
     image: sasha-backend
     build:
       context: ./backend
@@ -21,6 +24,8 @@ services:
       - "4000:4000"
     volumes:
       - ./backend:/app
+    env_file:
+      - ./backend/.env
     command: npm run dev
 
   database:
@@ -32,6 +37,11 @@ services:
     volumes:
     - shared:/shared
     - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
   pgadmin:
     image: dpage/pgadmin4
     environment:
