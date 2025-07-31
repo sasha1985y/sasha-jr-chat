@@ -393,43 +393,52 @@ project/
 
 #### Текущая структура папок:
 ```
-sasha-jr-chat/
-├── backend/                                  # Серверная часть
-│   ├── dist/                                 # Директория серверной сборки проекта
-│   │   ├── index.js                          # Основной файл сервера после компиляции
-│   ├── node_modules/                         # Директория зависимостей проекта Backend
-│   │   ├── packages...                       # Зависимости
-│   ├── src/                                  # Директория исходного кода TypeScript
-│   │   ├── index.ts                          # Исходный код TypeScript
-│   ├── .gitignore                            # .gitignore бэкенда
-│   ├── Dockerfile                            # Dockerfile для Backend
-│   ├── package-lock.json                     # Зависимости для Node.js
-│   ├── package.json                          # Зависимости для Node.js
-│   ├── tsconfig.json                         # Конфигурация TypeScript
-├── frontend/                                 # Клиентская часть
-│   ├── css/                                  # Директория стилей
-|   │   ├── main.css                          # Основной файл css
-│   ├── img/                                  # Директория картинок
-|   │   ├── images...                         # картинки
-│   ├── js/                                   # Директория логики работы на клиенте
-|   │   ├── components/                       # Директория функциональных компонентов
-|   |   │   ├── chat-options-btn-layout.js    # Файл функционального компонента
-|   |   │   ├── header-chat-lable-layout.js   # Файл функционального компонента
-|   |   │   ├── message-element-layout.js     # Файл функционального компонента
-|   |   │   ├── message-popup-layout.js       # Файл функционального компонента
-|   |   │   ├── toggle-button-layout.js       # Файл функционального компонента
-|   │   ├── utils/                            # Директория функций общего назначения
-|   |   │   ├── utils.js                      # Файл функций общего назначения
-|   │   ├── index.js                          # Логика работы на клиенте
-|   │   ├── layout.js                         # файл для документирования некоторых элементов разметки
-|   │   ├── main.js                           # Основной файл реэкспорта
-│   ├── Dockerfile                            # Dockerfile для Frontend
-│   ├── index.html                            # Основной файл HTML
-│   ├── package-lock.json                     # Зависимости для Node.js
-│   ├── package.json                          # Зависимости для Node.js
-├── compose.yml                               # Docker Compose для управления проектом
-├── .gitignore                                # .gitignore приложения
-├── README.md                                 # Readme приложения
+chat/
+├── backend/                                            # Серверная часть
+│   ├── dist/                                           # Директория серверной сборки проекта
+│   │   ├── index.js                                    # Основной файл сервера после компиляции
+│   ├── migrations/                                     # Директория миграций проекта
+|   │   ├── sqls/                                       # Директория создания и отката миграций
+|   |   |   ├──20250728212651-create-users-down.sql     # Файл отката миграции
+|   |   |   ├──20250728212651-create-users-up.sql       # Файл создания миграции
+│   │   ├── 20250728212651-create-users.js              # файл создания таблицы
+│   ├── node_modules/                                   # Директория зависимостей проекта Backend
+│   │   ├── packages...                                 # Зависимости
+│   ├── src/                                            # Директория исходного кода TypeScript
+│   │   ├── index.ts                                    # Исходный код TypeScript
+│   ├── .dockerignore                                   # .dockerignore бэкенда
+│   ├── .env                                            # файл окружения
+│   ├── .gitignore                                      # .gitignore бэкенда
+│   ├── database.json                                   # файл с настройками базы данных
+│   ├── Dockerfile                                      # Dockerfile для Backend
+│   ├── package-lock.json                               # Зависимости для Node.js
+│   ├── package.json                                    # Зависимости для Node.js
+│   ├── tsconfig.json                                   # Конфигурация TypeScript
+├── frontend/                                           # Клиентская часть
+│   ├── css/                                            # Директория стилей
+|   │   ├── main.css                                    # Основной файл css
+│   ├── img/                                            # Директория картинок
+|   │   ├── images...                                   # картинки
+│   ├── js/                                             # Директория логики работы на клиенте
+|   │   ├── components/                                 # Директория функциональных компонентов
+|   |   │   ├── chat-options-btn-layout.js              # Файл функционального компонента
+|   |   │   ├── header-chat-lable-layout.js             # Файл функционального компонента
+|   |   │   ├── message-element-layout.js               # Файл функционального компонента
+|   |   │   ├── message-popup-layout.js                 # Файл функционального компонента
+|   |   │   ├── toggle-button-layout.js                 # Файл функционального компонента
+|   │   ├── utils/                                      # Директория функций общего назначения
+|   |   │   ├── utils.js                                # Файл функций общего назначения
+|   │   ├── index.js                                    # Логика работы на клиенте
+|   │   ├── layout.js                                   # файл для документирования некоторых элементов 
+|   │   ├── main.js                                     # Основной файл реэкспорта
+│   ├── .dockerignore                                   # .dockerignore фронтенда
+│   ├── Dockerfile                                      # Dockerfile для Frontend
+│   ├── index.html                                      # Основной файл HTML
+│   ├── package-lock.json                               # Зависимости для Node.js
+│   ├── package.json                                    # Зависимости для Node.js
+├── compose.yml                                         # Docker Compose для управления проектом
+├── .gitignore                                          # .gitignore приложения
+├── README.md                                           # Readme приложения
 ```
 
 **Основные файлы и их назначение:**
@@ -951,6 +960,8 @@ docker cp ./config.py sasha-jr-chat-pgadmin-1:/pgadmin4/config.py     копир
 docker exec sasha-jr-chat-pgadmin-1 cat /pgadmin4/config.py    прочитать файл
 
 docker compose restart pgadmin    перезапуск контейнера
+
+https://db-migrate.readthedocs.io/en/latest/Getting%20Started/configuration/
 
 
 

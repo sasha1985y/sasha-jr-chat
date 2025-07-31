@@ -14,8 +14,7 @@ type Message = {
     "lifetime": number,
 };
 
-// const client = new Client();
-const client = new Client({
+const pgClient = new Client({
     user: process.env.PGUSER,
     password: process.env.PGPASSWORD,
     host: process.env.PGHOST,
@@ -232,8 +231,8 @@ async function initServer() {
     });
 
     try {
-        await client.connect();
-        const res = await client.query('SELECT $1::text as message', ['Hello world!']);
+        await pgClient.connect();
+        const res = await pgClient.query('SELECT $1::text as message', ['Hello world!']);
         console.log(res.rows[0].message); // Hello world!
     } catch (err) {
         console.error('Failed to connect to the database:', err);
@@ -246,7 +245,7 @@ async function initServer() {
 }
 
 process.on("exit", async function () {
-  await client.end();
+  await pgClient.end();
 });
 
 
