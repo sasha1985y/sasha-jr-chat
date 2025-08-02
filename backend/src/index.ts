@@ -6,6 +6,11 @@ import { Client } from "pg";
 
 const PORT = process.env.APP_PORT || 4000;
 
+type User = {
+  "user_id": number,
+  "username": string,
+};
+
 type Message = {
     "id": number,
     "username": string,
