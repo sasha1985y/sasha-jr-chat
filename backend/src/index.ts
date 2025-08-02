@@ -23,7 +23,6 @@ const pgClient = new Client({
 });
 
 const server = express();
-//const PORT = 4000;
 
 const messages: Message[] = [];
 
@@ -99,6 +98,12 @@ async function initServer() {
     server.get("/messages", function (req: Request, res: Response) {
         res.status(200).json([...messages]);
     });
+
+    server.get("/users", async function(req: Request, res: Response) {
+        const usersResponse = await pgClient.query("SELECT * FROM users");
+        console.dir(usersResponse);
+        res.status(200).send(usersResponse.rows);
+    });
     
     
     server.post("/messages", function (req: Request, res: Response) {
@@ -154,7 +159,7 @@ async function initServer() {
             lifetime: 60,
         };
         
-        //messages.push(newMessage);
+        messages.push(newMessage);
         addMessageWithLifetime(newMessage);
         res.status(201).send(newMessage);
     });
