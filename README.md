@@ -963,7 +963,9 @@ docker compose restart pgadmin    перезапуск контейнера
 
 https://db-migrate.readthedocs.io/en/latest/Getting%20Started/configuration/
 
+npx db-migrate create create-messages --sql-file создать файл миграций
 
-
+npm run migrate:up запустить миграцию
+npm run migrate:down обратить миграцию
 
 
