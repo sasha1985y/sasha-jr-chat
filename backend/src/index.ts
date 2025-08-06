@@ -29,7 +29,7 @@ const pgClient = new Client({
 
 const server = express();
 
-const messages: Message[] = [];
+// const messages: Message[] = [];
 
 function* infiniteSequence() {
     let i = 0;
@@ -100,19 +100,28 @@ async function initServer() {
         }, 1000);
     }
     
-    server.get("/messages", function (req: Request, res: Response) {
-        res.status(200).json([...messages]);
+    server.get("/messages", async function (req: Request, res: Response) {
+        const messagesResponse = await pgClient.query(`SELECT 
+            message_id as id,
+            user_id as username,
+            text,
+            created_at as timestamp,
+            lifetime
+            FROM messages`);
+
+        res.status(200).send(messagesResponse.rows as Message[]);
     });
 
     server.get("/users", async function(req: Request, res: Response) {
         const usersResponse = await pgClient.query("SELECT * FROM users");
         console.dir(usersResponse);
-        res.status(200).send(usersResponse.rows);
+        res.status(200).send(usersResponse.rows as User[]);
     });
     
     
-    server.post("/messages", function (req: Request, res: Response) {
-        const { username, text } = req.body;
+    // server.post("/messages", function (req: Request, res: Response) {
+    server.post("/messages", async function (req: Request, res: Response) {
+        const { username, text, lifetime } = req.body;
     
         if (typeof username !== "string") {
             res.status(400).send({
@@ -155,18 +164,34 @@ async function initServer() {
             });
             return;
         }
+
+        try {
+            const newMessageResponse = await pgClient.query(`INSERT INTO messages(
+                text,
+                user_id,
+                lifetime
+            ) VALUES (
+                '${text}',
+                ${1 + Math.floor(Math.random() * 3)},
+                ${lifetime}
+            )`);
+
+            res.sendStatus(201);
+        } catch (err) {
+            res.sendStatus(500);
+        }
     
-        const newMessage = {
-            id: idIterator.next().value as number,
-            text,
-            timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
-            username,
-            lifetime: 60,
-        };
+        // const newMessage = {
+        //     id: idIterator.next().value as number,
+        //     text,
+        //     timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
+        //     username,
+        //     lifetime: 60,
+        // };
         
-        messages.push(newMessage);
-        addMessageWithLifetime(newMessage);
-        res.status(201).send(newMessage);
+        // messages.push(newMessage);
+        // addMessageWithLifetime(newMessage);
+        // res.status(201).send(newMessage);
     });
     
     server.patch("/messages/:id", function (req: Request, res: Response) {
