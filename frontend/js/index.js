@@ -164,6 +164,7 @@ function initForm(container) {
         const messageData = {
             username: formData.get("username"),
             text: formData.get("text"),
+            lifetime: 60
         };
 
         formTextField.disabled = true;

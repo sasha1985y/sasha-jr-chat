@@ -13,7 +13,7 @@ type User = {
 
 type Message = {
     "id": number,
-    "username": string,
+    "username": string | null,
     "text": string,
     "timestamp": string,
     "lifetime": number,
@@ -49,65 +49,88 @@ async function initServer() {
     server.use(express.json());
     
     // Функция, которая добавляет системное сообщение
-    function addMidnightMessage() {
+    async function addMidnightMessage() {
         const currentTimeStr = dayjs().format("D MMMM YYYY");
-        const timeMessage: Message = {
-            id: idIterator.next().value as number,
-            username: "System",
-            text: `<div>${currentTimeStr}</div>`,
-            timestamp: dayjs().toISOString(),
-            lifetime: 86400,
-        };
-        
-        messages.push(timeMessage);
-    
-        const timerInterval = setInterval(() => {
-            timeMessage.lifetime--;
-    
-            if (timeMessage.lifetime <= 0) {
-                const systemMessageIndex = messages.findIndex(message => message.username === "System");
-                if (systemMessageIndex !== -1) {
-                    messages.splice(systemMessageIndex, 1); // Удаляем сообщение по индексу
-                }
-    
-                clearInterval(timerInterval);
-            }
-        }, 1000);
-    
+        const timeMessageText = `<div>${currentTimeStr}</div>`;
+
+        try {
+            // Вставляем системное сообщение в базу данных
+            const insertResponse = await pgClient.query(`INSERT INTO messages(
+                text,
+                user_id,
+                lifetime
+            ) VALUES (
+                '${timeMessageText}',
+                NULL, -- Системное сообщение не привязано к пользователю
+                86400
+            ) RETURNING *`);
+
+            console.log("Midnight message added:", insertResponse.rows[0]);
+        } catch (err) {
+            console.error("Failed to add midnight message:", err);
+        }
     }
-    
-    setInterval(checkMidnight, 1000);
     
     function checkMidnight() {
-      const now = dayjs();
-      if (now.hour() === 0 && now.minute() === 0 && now.second() === 0) {
-        addMidnightMessage();
-      }
+        const now = dayjs();
+        if (now.hour() === 0 && now.minute() === 0 && now.second() === 0) {
+            addMidnightMessage();
+        }
     }
+
+    // Запускаем проверку каждую секунду
+    setInterval(checkMidnight, 1000);
     
-    function addMessageWithLifetime(message: Message) {
-        messages.push(message);
-    
-        setTimeout(() => {
-            const messageIndex = messages.findIndex(m => m.id === message.id);
-            if (messageIndex !== -1) {
-                messages.splice(messageIndex, 1);
-            }
-        }, message.lifetime * 1000);
-    
-        setInterval(() => {
-            message.lifetime--;
-        }, 1000);
+    async function addMessageWithLifetime(message: Message) {
+        try {
+            // Вставляем сообщение в базу данных
+            const insertResponse = await pgClient.query(`INSERT INTO messages(
+                text,
+                user_id,
+                lifetime
+            ) VALUES (
+                '${message.text}',
+                (SELECT user_id FROM users WHERE username = '${message.username}'),
+                ${message.lifetime}
+            ) RETURNING *`);
+
+            console.log("Message added:", insertResponse.rows[0]);
+
+            // Устанавливаем таймер для удаления сообщения через указанное время
+            setTimeout(async () => {
+                try {
+                    await pgClient.query(`DELETE FROM messages WHERE message_id = ${insertResponse.rows[0].id}`);
+                    console.log("Message deleted:", insertResponse.rows[0].id);
+                } catch (err) {
+                    console.error("Failed to delete message:", err);
+                }
+            }, message.lifetime * 1000);
+
+            // Устанавливаем таймер для уменьшения времени жизни каждую секунду
+            const timerInterval = setInterval(async () => {
+                try {
+                    await pgClient.query(`UPDATE messages SET lifetime = lifetime - 1 WHERE message_id = ${insertResponse.rows[0].id}`);
+                } catch (err) {
+                    console.error("Failed to update message lifetime:", err);
+                    clearInterval(timerInterval);
+                }
+            }, 1000);
+
+        } catch (err) {
+            console.error("Failed to add message with lifetime:", err);
+        }
     }
     
     server.get("/messages", async function (req: Request, res: Response) {
-        const messagesResponse = await pgClient.query(`SELECT 
-            message_id as id,
-            user_id as username,
-            text,
-            created_at as timestamp,
-            lifetime
-            FROM messages`);
+        const messagesResponse = await pgClient.query(`SELECT
+            messages.message_id AS id,
+            users.username AS username,
+            messages.text AS text,
+            messages.created_at AS timestamp,
+            messages.lifetime AS lifetime
+            FROM messages
+            LEFT JOIN users ON messages.user_id = users.user_id
+            ORDER BY messages.created_at ASC`);
 
         res.status(200).send(messagesResponse.rows as Message[]);
     });
@@ -119,51 +142,58 @@ async function initServer() {
     });
     
     
-    // server.post("/messages", function (req: Request, res: Response) {
     server.post("/messages", async function (req: Request, res: Response) {
         const { username, text, lifetime } = req.body;
-    
+
         if (typeof username !== "string") {
             res.status(400).send({
                 message: "Username must be a string",
             });
             return;
         }
-    
+
         if (username.length < 2) {
             res.status(400).send({
                 message: "Username must be at least 2 characters long",
             });
             return;
         }
-    
+
         if (username.length > 20) {
             res.status(400).send({
                 message: "Username must be no more than 20 characters long",
             });
             return;
         }
-    
+
         if (typeof text !== "string") {
             res.status(400).send({
                 message: "Message text must be a string",
             });
             return;
         }
-    
+
         if (text.length < 1) {
             res.status(400).send({
                 message: "Message text must be at least 1 character long",
             });
             return;
         }
-    
+
         if (text.length > 500) {
             res.status(400).send({
                 message: "Message text must be no more than 500 characters long",
             });
             return;
         }
+
+        // const userResponse = await pgClient.query(`SELECT user_id FROM users WHERE username = '${username}'`);
+        // if (userResponse.rowCount === 0) {
+        //     res.status(400).send({
+        //         message: "User does not exist",
+        //     });
+        //     return;
+        // }
 
         try {
             const newMessageResponse = await pgClient.query(`INSERT INTO messages(
@@ -172,97 +202,92 @@ async function initServer() {
                 lifetime
             ) VALUES (
                 '${text}',
-                ${1 + Math.floor(Math.random() * 3)},
+                '${1 + Math.floor(Math.random() * 3)}',
                 ${lifetime}
-            )`);
+            ) RETURNING *`);
 
-            res.sendStatus(201);
+            // Добавляем сообщение с временем жизни
+            addMessageWithLifetime(newMessageResponse.rows[0]);
+
+            res.status(201).send(newMessageResponse.rows[0]);
         } catch (err) {
-            res.sendStatus(500);
+            res.status(500).send({
+                message: "Failed to add message",
+            });
         }
-    
-        // const newMessage = {
-        //     id: idIterator.next().value as number,
-        //     text,
-        //     timestamp: dayjs(new Date().toISOString()).format("HH:mm"),
-        //     username,
-        //     lifetime: 60,
-        // };
-        
-        // messages.push(newMessage);
-        // addMessageWithLifetime(newMessage);
-        // res.status(201).send(newMessage);
     });
     
-    server.patch("/messages/:id", function (req: Request, res: Response) {
+    server.patch("/messages/:id", async function (req: Request, res: Response) {
         const messageId = parseInt(req.params.id, 10);
         const { text, username } = req.body;
-    
-        const messageIndex = messages.findIndex(message => message.id === messageId);
-        
-        if (messageIndex === -1) {
-            res.status(404).send({
-                message: "Message not found",
-            });
-            return;
-        }
-    
-        if (messages[messageIndex].username.trim().replaceAll(" ", "") !== username.trim().replaceAll(" ", ""))  {
-            res.status(403).send({
-                message: "You can only edit your own messages",
-            });
-            return;
-        }
-    
+
         if (typeof text !== "string") {
             res.status(400).send({
                 message: "Message text must be a string",
             });
             return;
         }
-    
+
         if (text.length < 1) {
             res.status(400).send({
                 message: "Message text must be at least 1 character long",
             });
             return;
         }
-    
+
         if (text.length > 500) {
             res.status(400).send({
                 message: "Message text must be no more than 500 characters long",
             });
             return;
         }
-    
-        messages[messageIndex].text = text;
-        res.status(200).send(messages[messageIndex]);
+
+        try {
+            const updateMessageResponse = await pgClient.query(`UPDATE messages
+                SET text = '${text}'
+                WHERE message_id = ${messageId}
+                AND user_id = (SELECT user_id FROM users WHERE username = '${username}')
+                RETURNING *`);
+
+            if (updateMessageResponse.rowCount === 0) {
+                res.status(404).send({
+                    message: "Message not found or you are not the author",
+                });
+                return;
+            }
+
+            res.status(200).send(updateMessageResponse.rows[0]);
+        } catch (err) {
+            res.status(500).send({
+                message: "Failed to update message",
+            });
+        }
     });
     
-    server.delete("/messages/:id", function (req: Request, res: Response) {
+    server.delete("/messages/:id", async function (req: Request, res: Response) {
         const messageId = parseInt(req.params.id, 10);
         const { username } = req.body;
-    
-        const messageIndex = messages.findIndex(message => message.id === messageId);
-    
-        if (messageIndex === -1) {
-            res.status(404).send({
-                message: "Message not found",
+
+        try {
+            const deleteMessageResponse = await pgClient.query(`DELETE FROM messages
+                WHERE message_id = ${messageId}
+                AND user_id = (SELECT user_id FROM users WHERE username = '${username}')`);
+
+            if (deleteMessageResponse.rowCount === 0) {
+                res.status(404).send({
+                    message: "Message not found or you are not the author",
+                });
+                return;
+            }
+
+            res.status(200).send({
+                message: "Message deleted successfully",
             });
-            return;
-        }
-    
-        if (messages[messageIndex].username.trim().replaceAll(" ", "") !== username.trim().replaceAll(" ", "")) {
-            res.status(403).send({
-                message: "You can only delete your own messages",
+        } catch (err) {
+            res.status(500).send({
+                message: "Failed to delete message",
             });
-            return;
         }
-    
-        messages.splice(messageIndex, 1);
-        res.status(200).send({
-            message: "Message deleted successfully",
-        });
     });
 
     try {
