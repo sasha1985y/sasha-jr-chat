@@ -29,21 +29,10 @@ const pgClient = new Client({
 
 const server = express();
 
-// const messages: Message[] = [];
-
-function* infiniteSequence() {
-    let i = 0;
-    while (true) {
-        yield ++i;
-    }
-}
-
 async function initServer() {
     if (!process.env.PGUSER) {
         throw new Error("Server cannot be started without database credentials provided in .env file");
     }
-
-    const idIterator = infiniteSequence();
     
     server.use(cors());
     server.use(express.json());
@@ -165,27 +154,6 @@ async function initServer() {
         });
             return;
         }
-
-        // if (typeof username !== "string") {
-        //     res.status(400).send({
-        //         message: "Username must be a string",
-        //     });
-        //     return;
-        // }
-
-        // if (username.length < 2) {
-        //     res.status(400).send({
-        //         message: "Username must be at least 2 characters long",
-        //     });
-        //     return;
-        // }
-
-        // if (username.length > 20) {
-        //     res.status(400).send({
-        //         message: "Username must be no more than 20 characters long",
-        //     });
-        //     return;
-        // }
 
         if (typeof text !== "string") {
             res.status(400).send({
