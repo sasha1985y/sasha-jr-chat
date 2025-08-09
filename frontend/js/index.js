@@ -19,7 +19,6 @@ let mode = "";
 headerChatLable.innerHTML = "";
 
 const USERNAME_REC = "username";
-const FAKE_USER = "Anonimous_user";
 const SYSTEM_USER = "System";
 let username = null;
 
@@ -186,7 +185,6 @@ function initForm(container) {
                 return response.json();
             })
             .then(function (newMessageResponse) {
-                console.log(newMessageResponse.status);
 
                 formTextField.disabled = false;
                 formTextField.value = "";
@@ -275,10 +273,6 @@ function initChat(container) {
     const loginName = formContainer.querySelector("input");
     initApp();
 
-    if (username === null || username === FAKE_USER) {
-        loginName.value = FAKE_USER;
-        localStorage.setItem(USERNAME_REC, FAKE_USER);
-    } 
     loginName.value = initApp();
     
     // Запускаем getMessages каждые 3 секунды
@@ -314,15 +308,15 @@ function initUsernameForm() {
                 "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                "username": enteredUsername,
+                    "username": enteredUsername,
                 }),
             })
                 .then(function(authResponse) {
-                if (authResponse.status !== 200) {
-                    //
-                }
+                    if (authResponse.status !== 200) {
+                        //
+                    }
 
-                return authResponse.json();
+                    return authResponse.json();
                 })
                 .then(function(authResponseData) {
                     localStorage.setItem(USERNAME_REC, authResponseData.user_id);

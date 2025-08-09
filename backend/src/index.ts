@@ -43,7 +43,7 @@ async function initServer() {
     }
 
     async function getUserById(userId: number) {
-        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE user_id = ${userId}`);
+        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE user_id = $1::integer`, [userId]);
 
         if (usersResponse.rows.length > 0) {
         return usersResponse.rows[0] as User;
@@ -53,7 +53,7 @@ async function initServer() {
     }
 
     async function getUserByName(username: string) {
-        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE username = '${username}'`);
+        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE username = $1::text`, [username]);
 
         if (usersResponse.rows.length > 0) {
         return usersResponse.rows[0] as User;
@@ -154,31 +154,31 @@ async function initServer() {
         const user = await getUserByName(username);
 
         if (user !== null) {
-        res.status(200).send({
-            "user_id": user.user_id,
-        });
-        return;
+            res.status(200).send({
+                "user_id": user.user_id,
+            });
+            return;
         }
 
         const newUserResponse = await pgClient.query(`INSERT INTO users(
         username
         ) VALUES (
-        '${username}'
-        )`);
+            $1::text
+        )`, [username]);
 
         if (newUserResponse.rowCount === 0) {
-        res.sendStatus(500);
+            res.sendStatus(500);
         }
 
         const newUser = await getUserByName(username);
 
         if (newUser === null) {
-        res.sendStatus(500);
-        return;
+            res.sendStatus(500);
+            return;
         }
 
         res.status(200).send({
-        "user_id": newUser.user_id,
+            "user_id": newUser.user_id,
         });
     });
 
@@ -224,25 +224,13 @@ async function initServer() {
         let newMessageResponse;
 
         try {
-            console.log(`INSERT INTO messages(
-                text,
-                user_id,
-                lifetime
-            ) VALUES (
-                '${text}',
-                ${user_id},
-                ${lifetime}
-            )`);
             
             newMessageResponse = await pgClient.query(`INSERT INTO messages(
                 text,
                 user_id,
                 lifetime
             ) VALUES (
-                '${text}',
-                ${user_id},
-                ${lifetime}
-            ) RETURNING *`);
+                $1::text, $2::integer, $2::integer)`, [text, user_id, lifetime]);
 
             // Добавляем сообщение с временем жизни
             addMessageWithLifetime(newMessageResponse.rows[0]);
