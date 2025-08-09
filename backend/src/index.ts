@@ -47,6 +47,21 @@ async function initServer() {
     
     server.use(cors());
     server.use(express.json());
+
+    async function getUsers() {
+        const usersResponse = await pgClient.query("SELECT * FROM users");
+        return usersResponse.rows as User[];
+    }
+
+    async function getUser(userId: number) {
+        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE user_id = ${userId}`);
+
+        if (usersResponse.rows.length > 0) {
+        return usersResponse.rows[0] as User;
+        }
+
+        return null;
+    }
     
     // Функция, которая добавляет системное сообщение
     async function addMidnightMessage() {
@@ -136,35 +151,41 @@ async function initServer() {
     });
 
     server.get("/users", async function(req: Request, res: Response) {
-        const usersResponse = await pgClient.query("SELECT * FROM users");
-        console.dir(usersResponse);
-        res.status(200).send(usersResponse.rows as User[]);
+        const usersResponse = await getUsers();
+        res.status(200).send(usersResponse);
     });
     
     
     server.post("/messages", async function (req: Request, res: Response) {
-        const { username, text, lifetime } = req.body;
+        const { user_id, text, lifetime } = req.body;
 
-        if (typeof username !== "string") {
-            res.status(400).send({
-                message: "Username must be a string",
-            });
+        if (await getUser(user_id) === null) {
+        res.status(401).send({
+            message: "Incorrect username",
+        });
             return;
         }
 
-        if (username.length < 2) {
-            res.status(400).send({
-                message: "Username must be at least 2 characters long",
-            });
-            return;
-        }
+        // if (typeof username !== "string") {
+        //     res.status(400).send({
+        //         message: "Username must be a string",
+        //     });
+        //     return;
+        // }
 
-        if (username.length > 20) {
-            res.status(400).send({
-                message: "Username must be no more than 20 characters long",
-            });
-            return;
-        }
+        // if (username.length < 2) {
+        //     res.status(400).send({
+        //         message: "Username must be at least 2 characters long",
+        //     });
+        //     return;
+        // }
+
+        // if (username.length > 20) {
+        //     res.status(400).send({
+        //         message: "Username must be no more than 20 characters long",
+        //     });
+        //     return;
+        // }
 
         if (typeof text !== "string") {
             res.status(400).send({
@@ -187,14 +208,6 @@ async function initServer() {
             return;
         }
 
-        // const userResponse = await pgClient.query(`SELECT user_id FROM users WHERE username = '${username}'`);
-        // if (userResponse.rowCount === 0) {
-        //     res.status(400).send({
-        //         message: "User does not exist",
-        //     });
-        //     return;
-        // }
-
         try {
             const newMessageResponse = await pgClient.query(`INSERT INTO messages(
                 text,
@@ -202,7 +215,7 @@ async function initServer() {
                 lifetime
             ) VALUES (
                 '${text}',
-                '${1 + Math.floor(Math.random() * 3)}',
+                ${user_id},
                 ${lifetime}
             ) RETURNING *`);
 
