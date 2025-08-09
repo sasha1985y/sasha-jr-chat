@@ -162,7 +162,7 @@ function initForm(container) {
         const formData = new FormData(evt.target);
 
         const messageData = {
-            username: formData.get("username"),
+            user_id: formData.get("username"),
             text: formData.get("text"),
             lifetime: 60
         };
@@ -307,7 +307,32 @@ function initUsernameForm() {
             formLoginInfo.textContent = "Username must be no more than 20 characters long";
         } else {
             formLoginInfo.textContent = "";
-            localStorage.setItem(USERNAME_REC, enteredUsername);
+
+            fetch("http://localhost:4000/users", {
+                method: "POST",
+                headers: {
+                "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                "username": enteredUsername,
+                }),
+            })
+                .then(function(authResponse) {
+                if (authResponse.status !== 200) {
+                    //
+                }
+
+                return authResponse.json();
+                })
+                .then(function(authResponseData) {
+                    localStorage.setItem(USERNAME_REC, authResponseData.user_id);
+
+                    usernameContainer.close();
+                    usernameForm.onsubmit = null;
+
+                });
+
+            
             usernameContainer.close();
             usernameForm.onsubmit = null;
         }

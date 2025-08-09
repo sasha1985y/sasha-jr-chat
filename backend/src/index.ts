@@ -42,8 +42,18 @@ async function initServer() {
         return usersResponse.rows as User[];
     }
 
-    async function getUser(userId: number) {
+    async function getUserById(userId: number) {
         const usersResponse = await pgClient.query(`SELECT * FROM users WHERE user_id = ${userId}`);
+
+        if (usersResponse.rows.length > 0) {
+        return usersResponse.rows[0] as User;
+        }
+
+        return null;
+    }
+
+    async function getUserByName(username: string) {
+        const usersResponse = await pgClient.query(`SELECT * FROM users WHERE username = '${username}'`);
 
         if (usersResponse.rows.length > 0) {
         return usersResponse.rows[0] as User;
@@ -139,6 +149,39 @@ async function initServer() {
         res.status(200).send(messagesResponse.rows as Message[]);
     });
 
+    server.post("/users", async function (req: Request, res: Response) {
+        const { username } = req.body;
+        const user = await getUserByName(username);
+
+        if (user !== null) {
+        res.status(200).send({
+            "user_id": user.user_id,
+        });
+        return;
+        }
+
+        const newUserResponse = await pgClient.query(`INSERT INTO users(
+        username
+        ) VALUES (
+        '${username}'
+        )`);
+
+        if (newUserResponse.rowCount === 0) {
+        res.sendStatus(500);
+        }
+
+        const newUser = await getUserByName(username);
+
+        if (newUser === null) {
+        res.sendStatus(500);
+        return;
+        }
+
+        res.status(200).send({
+        "user_id": newUser.user_id,
+        });
+    });
+
     server.get("/users", async function(req: Request, res: Response) {
         const usersResponse = await getUsers();
         res.status(200).send(usersResponse);
@@ -148,11 +191,13 @@ async function initServer() {
     server.post("/messages", async function (req: Request, res: Response) {
         const { user_id, text, lifetime } = req.body;
 
-        if (await getUser(user_id) === null) {
-        res.status(401).send({
-            message: "Incorrect username",
-        });
-            return;
+        const user = await getUserById(user_id);
+
+        if (user === null) {
+            res.status(401).send({
+                message: "Incorrect username",
+            });
+                return;
         }
 
         if (typeof text !== "string") {
@@ -176,8 +221,20 @@ async function initServer() {
             return;
         }
 
+        let newMessageResponse;
+
         try {
-            const newMessageResponse = await pgClient.query(`INSERT INTO messages(
+            console.log(`INSERT INTO messages(
+                text,
+                user_id,
+                lifetime
+            ) VALUES (
+                '${text}',
+                ${user_id},
+                ${lifetime}
+            )`);
+            
+            newMessageResponse = await pgClient.query(`INSERT INTO messages(
                 text,
                 user_id,
                 lifetime
@@ -192,6 +249,11 @@ async function initServer() {
 
             res.status(201).send(newMessageResponse.rows[0]);
         } catch (err) {
+            console.error(err);
+            console.dir(newMessageResponse, {
+                depth: 10
+            });
+
             res.status(500).send({
                 message: "Failed to add message",
             });
