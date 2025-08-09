@@ -22,6 +22,12 @@ const USERNAME_REC = "username";
 const SYSTEM_USER = "System";
 let username = null;
 
+window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+        event.preventDefault();
+    }
+});
+
 function showElement(template, container) {
 
     if (currentElement) {
